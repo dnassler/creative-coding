@@ -1,17 +1,14 @@
-var x0;
-var y0;
 var xy0;
 var arcDefArr = [];
 var discArr = [];
 var particleArr = [];
+var d;
 
 function setup() {
   // uncomment this line to make the canvas the full size of the window
   createCanvas(windowWidth, windowHeight);
-  x0 = windowWidth/2;
-  y0 = windowHeight/2;
-  xy0 = new p5.Vector(x0,y0);
-
+  xy0 = new p5.Vector(windowWidth/2,windowHeight/2);
+  d = windowWidth/4;
   //resetDiscArr();
   resetArcArr();
 
@@ -26,7 +23,6 @@ function draw() {
   noFill();
 
   var strokeWeight0 = 10;
-  var d = windowWidth/2;
 
   // var dFactor = 0.9;
   // var arcLengthFactor = 0.2;
@@ -42,7 +38,7 @@ function draw() {
 
   discArr.forEach( function(item) {
     fill( item.discColor );
-    ellipse(x0, y0, d*item.discSizeFactor, d*item.discSizeFactor);
+    ellipse(xy0.x, xy0.y, d*item.discSizeFactor, d*item.discSizeFactor);
   });
 
   noFill();
@@ -62,7 +58,7 @@ function draw() {
 
   	strokeWeight(strokeWeight0*strokeWeightFactor);
 
-  	arc(x0, y0, d * dFactor, d * dFactor, arcLengthFactor * HALF_PI + arcDirection * arcSpeedFactor/dFactor * millis()/1000, arcLengthFactor * PI + arcDirection * arcSpeedFactor / dFactor * millis()/1000);
+  	arc(xy0.x, xy0.y, d * dFactor, d * dFactor, arcLengthFactor * HALF_PI + arcDirection * arcSpeedFactor/dFactor * millis()/1000, arcLengthFactor * PI + arcDirection * arcSpeedFactor / dFactor * millis()/1000);
 
 
   });
@@ -108,6 +104,9 @@ function resetDiscArr() {
 }
 
 function resetArcArr() {
+
+  xy0 = new p5.Vector(windowWidth/2+random(-windowWidth/3,windowWidth/3),windowHeight/2+random(-windowHeight/3,windowHeight/3));
+  d = windowWidth/floor(random(1,6));
 
   resetDiscArr();
 
@@ -283,12 +282,16 @@ var Particle = function() {
 function launchParticle() {
   var p = new Particle();
   particleArr.push( p );
-
-  window.setTimeout( launchParticle, Math.random()*1000*5 );
-
+  //window.setTimeout( launchParticle, Math.random()*1000*5 );
 }
 
+var timeToLaunchNextParticle = 0;
+
 function updateParticles() {
+  if ( millis() > timeToLaunchNextParticle ) {
+    launchParticle();
+    timeToLaunchNextParticle = millis() + random(0,5000);
+  }
   particleArr = particleArr.filter( function(p) {
     if (!p.kill) {
       return true;
@@ -299,6 +302,18 @@ function updateParticles() {
     p.updatePos();
     p.drawPath();
   });
+
 }
+
+// todo
+// - add "star" remnants after the circle thing disappears
+// - each such star will last for a certain amount of time before changing states and then eventually fading to nothing
+// - maybe make old stars still attract but have their gravity fade
+// - maybe make the circle things pop into and out of existence in an animated fashion with sounds
+// - make sounds for popping into existence and out of existence of circle things
+// - make sounds for paths? when they come within a threshold of circle things
+// - make cirlce things have a sound as they rotate?
+// - make circle things rotate slower as they age?
+// - make circle things loose their outer rings?
 
 
