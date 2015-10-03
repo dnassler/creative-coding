@@ -1,18 +1,12 @@
-var xy0;
-var arcDefArr = [];
-var discArr = [];
 var particleArr = [];
-var d;
 
 function setup() {
   // uncomment this line to make the canvas the full size of the window
   createCanvas(windowWidth, windowHeight);
-  xy0 = new p5.Vector(windowWidth/2,windowHeight/2);
-  d = windowWidth/4;
-  //resetDiscArr();
-  resetArcArr();
 
-  window.setTimeout( launchParticle, Math.random()*1000*5 );
+  initAttractors();
+
+  //window.setTimeout( launchParticle, Math.random()*1000*5 );
   // window.setTimeout( resetArcArr, random()*1000*5 );
 }
 
@@ -20,10 +14,222 @@ function draw() {
   // draw stuff here
   //ellipse(width/2, height/2, 50, 50);
   background(255);
-  noFill();
+  
+  updateAttractors();
 
-  var strokeWeight0 = 10;
+  //arcDirection = 1;
+  //strokeWeightFactor = 1;
 
+  updateParticles();
+
+}
+
+
+var attractorArr = [];
+var mainAttractor = undefined;
+function getMainAttractor() {
+  return mainAttractor;
+}
+
+function initAttractors() {
+  newAttractor();
+}
+
+function newAttractor() {
+  var a = new Attractor();
+  mainAttractor = a;
+  attractorArr.push( a );
+}
+
+function updateAttractors() {
+
+  attractorArr.forEach( function( attractor ) {
+    attractor.update( function(state) {
+      if ( state == AttractorState.SECONDARY ) {
+        newAttractor();
+      }
+    });
+  });
+
+  attractorArr = attractorArr.filter( function(a) {
+    if ( a.getState() != AttractorState.EXPIRED ) {
+      return true;
+    }
+    return false;
+  });
+
+}
+
+var AttractorState = {
+  PRIMARY: 1,
+  SECONDARY: 2,
+  EXPIRED: 3
+};
+
+function Attractor() {
+
+  var _state = undefined;
+  this.getState = function() {
+    return _state;
+  }
+
+  var arcDefArr;
+  var discArr;
+
+  var xy0; // = new p5.Vector(windowWidth/2,windowHeight/2);
+  this.getXY = function() {
+    return xy0;
+  }
+
+  var d; // = windowWidth/4;
+
+  var startTime;
+  var primaryLifetime;
+  var secondaryLifetime;
+
+  function init() {
+
+    _state = AttractorState.PRIMARY;
+
+    startTime = millis();
+    primaryLifetime = random(3000,7000);
+    secondaryLifetime = random(5000,10000);
+
+    xy0 = new p5.Vector(
+      windowWidth/2+random(-windowWidth/3,windowWidth/3),
+      windowHeight/2+random(-windowHeight/3,windowHeight/3));
+    
+    d = windowWidth/floor(random(1,6));
+
+    discArr = [];
+
+    var numDiscs = round( Math.random()*3 );
+    for ( var i=0;i<numDiscs;i++ ) {
+      var disc = {
+        discSizeFactor : Math.random()*2 + 0.1,
+        discColor : color(Math.random()*250, Math.random()*255) //color(Math.random()*255, Math.random()*255, Math.random()*255)
+      };
+      discArr.push( disc );
+    }
+    discArr.sort(function compare(a,b) {
+      if (a.discSizeFactor > b.discSizeFactor) {
+        return -1;
+      }
+      return 1;
+    });
+
+    arcDefArr = [];
+
+    var numArcs = round( Math.random()*10 ) + 2;
+
+    for (var i=0;i<numArcs;i++) {
+
+      var newArcDef =
+        { arcDirection : 1,
+          arcSpeedFactor : Math.random()*4-2,
+          arcLengthFactor : Math.random()*3,
+          arcLengthFactorDelta : (Math.random() * 2 - 1) / 100,
+          dFactor : Math.random()*2 + 0.1,
+          //strokeWeightFactor : Math.random()*6,
+          strokeWeightFactor : Math.random()*10,
+
+          strokeColor : color(Math.random()*255, Math.random()*255, Math.random()*255, 200)
+        };
+
+      if ( newArcDef.dFactor < 0.3 ) {
+        newArcDef.strokeWeightFactor = Math.min( newArcDef.strokeWeightFactor, 1 );
+      }
+
+      arcDefArr.push( newArcDef );
+
+    }
+
+  }
+
+  init();
+
+
+  this.update = function( stateChangeCB ) {
+
+    if ( _state == AttractorState.PRIMARY ) {
+
+      noStroke();
+
+      discArr.forEach( function(item) {
+        fill( item.discColor );
+        ellipse(xy0.x, xy0.y, d*item.discSizeFactor, d*item.discSizeFactor);
+      });
+
+      noFill();
+      var strokeWeight0 = 10;
+
+      arcDefArr.forEach( function(item) {
+
+        // adjust arcLengthFactor
+        //item.arcLengthFactor += item.arcLengthFactorDelta;
+
+        dFactor = item.dFactor;
+        arcLengthFactor = item.arcLengthFactor;
+        arcSpeedFactor = item.arcSpeedFactor;
+        arcDirection = item.arcDirection;
+        strokeWeightFactor = item.strokeWeightFactor;
+
+        stroke( item.strokeColor );
+        //stroke(200,50,50);
+
+        strokeWeight(strokeWeight0*strokeWeightFactor);
+
+        arc(xy0.x, xy0.y, d * dFactor, d * dFactor, arcLengthFactor * HALF_PI + arcDirection * arcSpeedFactor/dFactor * millis()/1000, arcLengthFactor * PI + arcDirection * arcSpeedFactor / dFactor * millis()/1000);
+
+      });
+
+      if ( millis() > startTime + primaryLifetime ) {
+        _state = AttractorState.SECONDARY;
+        stateChangeCB( _state );
+      }
+
+    } else if ( _state == AttractorState.SECONDARY ) {
+
+      // noFill();
+      // stroke(0,50);
+      // strokeWeight(5);
+      // var starSize = 20;
+      // //var starWeight = 10;
+      // line( xy0.x - starSize, xy0.y, xy0.x + starSize, xy0.y );
+      // line( xy0.x, xy0.y - starSize, xy0.x, xy0.y + starSize );
+
+      // fill(0,50);
+      // noStroke();
+      // ellipse( xy0.x - starSize, xy0.y, starWeight, starWeight );
+      // ellipse( xy0.x + starSize, xy0.y, starWeight, starWeight );
+      // ellipse( xy0.x, xy0.y - starSize, starWeight, starWeight );
+      // ellipse( xy0.x, xy0.y + starSize, starWeight, starWeight );
+
+      if ( millis() > startTime + primaryLifetime + secondaryLifetime ) {
+        _state = AttractorState.EXPIRED;
+        stateChangeCB( _state );
+      }
+
+    } else {
+
+
+
+    }
+
+    noFill();
+    stroke(0);
+    strokeWeight(5);
+    var starSize = 20;
+    //var starWeight = 10;
+    line( xy0.x - starSize, xy0.y, xy0.x + starSize, xy0.y );
+    line( xy0.x, xy0.y - starSize, xy0.x, xy0.y + starSize );
+
+
+
+    
+  };
+
+}
   // var dFactor = 0.9;
   // var arcLengthFactor = 0.2;
   // var arcSpeedFactor = -1.5;
@@ -33,112 +239,6 @@ function draw() {
   // stroke(0);
   // strokeWeight(strokeWeight0*strokeWeightFactor);
   // arc(x0, y0, d, d, arcLengthFactor * HALF_PI + arcDirection * arcSpeedFactor * millis()/1000, arcLengthFactor * PI + arcDirection * arcSpeedFactor * millis()/1000);
-
-  noStroke();
-
-  discArr.forEach( function(item) {
-    fill( item.discColor );
-    ellipse(xy0.x, xy0.y, d*item.discSizeFactor, d*item.discSizeFactor);
-  });
-
-  noFill();
-  arcDefArr.forEach( function(item) {
-
-  	// adjust arcLengthFactor
-  	//item.arcLengthFactor += item.arcLengthFactorDelta;
-
-  	dFactor = item.dFactor;
-  	arcLengthFactor = item.arcLengthFactor;
-  	arcSpeedFactor = item.arcSpeedFactor;
-  	arcDirection = item.arcDirection;
-  	strokeWeightFactor = item.strokeWeightFactor;
-
-  	stroke( item.strokeColor );
-  	//stroke(200,50,50);
-
-  	strokeWeight(strokeWeight0*strokeWeightFactor);
-
-  	arc(xy0.x, xy0.y, d * dFactor, d * dFactor, arcLengthFactor * HALF_PI + arcDirection * arcSpeedFactor/dFactor * millis()/1000, arcLengthFactor * PI + arcDirection * arcSpeedFactor / dFactor * millis()/1000);
-
-
-  });
-
-  //arcDirection = 1;
-  //strokeWeightFactor = 1;
-
-  updateParticles();
-
-}
-
-var nextResetArcArrTimerID;
-var nextResetDiscArrTimerID;
-
-function mousePressed() {
-  if ( nextResetArcArrTimerID ) {
-    window.clearTimeout( nextResetArcArrTimerID );
-  }
-  resetArcArr();
-  // if ( nextResetDiscArrTimerID ) {
-  //   window.clearTimeout( nextResetDiscArrTimerID );
-  // }
-  //resetDiscArr();
-}
-
-function resetDiscArr() {
-  discArr = [];
-  var numDiscs = round( Math.random()*3 );
-  for ( var i=0;i<numDiscs;i++ ) {
-    var disc = {
-      discSizeFactor : Math.random()*2 + 0.1,
-      discColor : color(Math.random()*250, Math.random()*255) //color(Math.random()*255, Math.random()*255, Math.random()*255)
-    };
-    discArr.push( disc );
-  }
-  discArr.sort(function compare(a,b) {
-    if (a.discSizeFactor > b.discSizeFactor) {
-      return -1;
-    }
-    return 1;
-  });
-  //nextResetDiscArrTimerID = window.setTimeout( resetDiscArr, Math.random()*1000*5+1000 );
-}
-
-function resetArcArr() {
-
-  xy0 = new p5.Vector(windowWidth/2+random(-windowWidth/3,windowWidth/3),windowHeight/2+random(-windowHeight/3,windowHeight/3));
-  d = windowWidth/floor(random(1,6));
-
-  resetDiscArr();
-
-	arcDefArr = [];
-
-	var numArcs = round( Math.random()*10 ) + 2;
-
-	for (var i=0;i<numArcs;i++) {
-
-		var newArcDef =
-			{ arcDirection : 1,
-				arcSpeedFactor : Math.random()*4-2,
-				arcLengthFactor : Math.random()*3,
-				arcLengthFactorDelta : (Math.random() * 2 - 1) / 100,
-				dFactor : Math.random()*2 + 0.1,
-				//strokeWeightFactor : Math.random()*6,
-				strokeWeightFactor : Math.random()*10,
-
-				strokeColor : color(Math.random()*255, Math.random()*255, Math.random()*255, 200)
-			};
-
-		if ( newArcDef.dFactor < 0.3 ) {
-			newArcDef.strokeWeightFactor = Math.min( newArcDef.strokeWeightFactor, 1 );
-		}
-
-		arcDefArr.push( newArcDef );
-
-	}
-
-	nextResetArcArrTimerID = window.setTimeout( resetArcArr, Math.random()*1000*5 + 1000 );
-
-}
 
 var Particle = function() {
   var that = this;
@@ -213,6 +313,9 @@ var Particle = function() {
   };
 
   this.updatePos = function() {
+
+    var mainAttractor = getMainAttractor();
+    var xy0 = mainAttractor.getXY();
 
     var velFracXY = p5.Vector.div(velXY, velFactor);
     posXY.add( velFracXY );
