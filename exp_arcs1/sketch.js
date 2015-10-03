@@ -91,13 +91,15 @@ function Attractor() {
   var primaryLifetime;
   var secondaryLifetime;
 
+  var starSize = random(5,20);
+
   function init() {
 
     _state = AttractorState.PRIMARY;
 
     startTime = millis();
     primaryLifetime = random(3000,7000);
-    secondaryLifetime = random(5000,10000);
+    secondaryLifetime = 10000;//random(5000,10000);
 
     xy0 = new p5.Vector(
       windowWidth/2+random(-windowWidth/3,windowWidth/3),
@@ -205,6 +207,8 @@ function Attractor() {
         _state = AttractorState.PRIMARY_ENDING;
 
         createjs.Tween.get(param).to({diameter:0,alpha:0},500,createjs.Ease.cubicIn).call( function(){
+          param.alpha = 200;
+          createjs.Tween.get(param).to({alpha:0},secondaryLifetime);
           _state = AttractorState.SECONDARY;
           stateChangeCB( _state );
         });
@@ -227,6 +231,10 @@ function Attractor() {
       // ellipse( xy0.x + starSize, xy0.y, starWeight, starWeight );
       // ellipse( xy0.x, xy0.y - starSize, starWeight, starWeight );
       // ellipse( xy0.x, xy0.y + starSize, starWeight, starWeight );
+      
+      // noStroke();
+      // fill(255-param.alpha);
+      // ellipse( xy0.x, xy0.y, starSize*2, starSize*2 );
 
       if ( millis() > startTime + primaryLifetime + secondaryLifetime ) {
         _state = AttractorState.EXPIRED;
@@ -240,9 +248,8 @@ function Attractor() {
     }
 
     noFill();
-    stroke(0);
+    stroke(0,param.alpha);
     strokeWeight(5);
-    var starSize = 20;
     //var starWeight = 10;
     line( xy0.x - starSize, xy0.y, xy0.x + starSize, xy0.y );
     line( xy0.x, xy0.y - starSize, xy0.x, xy0.y + starSize );
