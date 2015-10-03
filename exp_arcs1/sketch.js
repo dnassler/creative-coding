@@ -81,7 +81,11 @@ function Attractor() {
     return xy0;
   }
 
-  var d; // = windowWidth/4;
+  //var d; // = windowWidth/4;
+  var param = {
+    diameter: undefined,
+    alpha: undefined
+  };
 
   var startTime;
   var primaryLifetime;
@@ -99,7 +103,10 @@ function Attractor() {
       windowWidth/2+random(-windowWidth/3,windowWidth/3),
       windowHeight/2+random(-windowHeight/3,windowHeight/3));
     
-    d = windowWidth/floor(random(1,6));
+    //d = windowWidth/floor(random(1,6));
+    param.diameter = 0;
+    param.alpha = 0;
+    createjs.Tween.get(param).to({diameter:windowWidth/floor(random(1,6)), alpha:255},500,createjs.Ease.cubicOut);
 
     discArr = [];
 
@@ -151,11 +158,14 @@ function Attractor() {
 
   this.update = function( stateChangeCB ) {
 
-    if ( _state == AttractorState.PRIMARY ) {
+    if ( _state == AttractorState.PRIMARY || _state == AttractorState.PRIMARY_ENDING ) {
 
       noStroke();
 
+      var d = param.diameter;
+
       discArr.forEach( function(item) {
+        //item.discColor[3] = param.alpha;
         fill( item.discColor );
         ellipse(xy0.x, xy0.y, d*item.discSizeFactor, d*item.discSizeFactor);
       });
@@ -174,6 +184,7 @@ function Attractor() {
         arcDirection = item.arcDirection;
         strokeWeightFactor = item.strokeWeightFactor;
 
+        //item.strokeColor[3] = param.alpha;
         stroke( item.strokeColor );
         //stroke(200,50,50);
 
@@ -183,9 +194,21 @@ function Attractor() {
 
       });
 
-      if ( millis() > startTime + primaryLifetime ) {
-        _state = AttractorState.SECONDARY;
-        stateChangeCB( _state );
+      if ( _state == AttractorState.PRIMARY && millis() > startTime + primaryLifetime ) {
+
+        // target.alpha = 0;
+        // createjs.Tween.get(target).to({alpha:1}, 1000).call(handleComplete);
+        // function handleComplete() {
+        //     //Tween complete
+        // }
+
+        _state = AttractorState.PRIMARY_ENDING;
+
+        createjs.Tween.get(param).to({diameter:0,alpha:0},500,createjs.Ease.cubicIn).call( function(){
+          _state = AttractorState.SECONDARY;
+          stateChangeCB( _state );
+        });
+
       }
 
     } else if ( _state == AttractorState.SECONDARY ) {
