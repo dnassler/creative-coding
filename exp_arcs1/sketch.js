@@ -22,6 +22,9 @@ function draw() {
 
   updateParticles();
 
+  if ( keyIsPressed === true ) {
+    saveCanvas('AttractorAndPathsCanvas','png');
+  }
 }
 
 
