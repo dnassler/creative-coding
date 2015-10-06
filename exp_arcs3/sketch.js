@@ -1,9 +1,11 @@
 var particleArr = [];
+var spaceRotationAngle = 0;
 
 function setup() {
   // uncomment this line to make the canvas the full size of the window
   createCanvas(windowWidth, windowHeight);
 
+  initBackgroundStars();
   //initAttractors();
 
   //window.setTimeout( launchParticle, Math.random()*1000*5 );
@@ -15,6 +17,13 @@ function draw() {
   //ellipse(width/2, height/2, 50, 50);
   background(0);
   
+  translate( windowWidth/2, windowHeight/2 );
+  rotate( spaceRotationAngle );
+  spaceRotationAngle += PI/4000.0;
+  translate( -windowWidth/2, -windowHeight/2 );
+
+  drawBackgroundStars();
+
   updateAttractors();
 
   //updateParticles();
@@ -48,6 +57,31 @@ function keyPressed() {
   }
 }
 
+var backgroundStarsArr = [];
+var starFieldWidth;
+function initBackgroundStars() {
+  starFieldWidth = Math.max(windowWidth,windowHeight);
+  var maxNumStars = 50;
+  for ( var i=0; i < maxNumStars; i++ ) {
+    backgroundStarsArr.push( new DistantStar() );
+  }
+}
+function drawBackgroundStars() {
+  backgroundStarsArr.forEach( function(star) {
+    star.draw();
+  });
+}
+
+function DistantStar() {
+  var size = random(1,10);
+  var px = random(starFieldWidth);
+  var py = random(starFieldWidth);
+  this.draw = function() {
+    noStroke();
+    fill(255);
+    ellipse( px, py, size, size );
+  }
+}
 
 var attractorArr = [];
 var mainAttractor = undefined;
