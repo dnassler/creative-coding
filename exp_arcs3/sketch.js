@@ -1,3 +1,4 @@
+
 var particleArr = [];
 var spaceRotationAngle = 0;
 
@@ -16,6 +17,10 @@ function draw() {
   // draw stuff here
   //ellipse(width/2, height/2, 50, 50);
   background(0);
+
+  // var fr = frameRate();
+  // console.log("frame rate = "+fr);
+
   
   translate( windowWidth/2, windowHeight/2 );
   rotate( spaceRotationAngle );
@@ -577,5 +582,4 @@ function updateParticles() {
   });
 
 }
-
 
