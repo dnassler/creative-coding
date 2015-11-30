@@ -45,7 +45,6 @@ function keyPressed() {
   if ( key === ' ' ) {
     if ( !paused ) {
       noLoop();
-      createjs.Ticker.paused = true;
       paused = true;
       pausedAtTime = millis();
     } else {
@@ -55,7 +54,6 @@ function keyPressed() {
       attractorArr.forEach( function(item) {
         item.correctStartTimeByDuration( pausedDuration );
       });
-      createjs.Ticker.paused = false;
       loop();
       paused = false;
     }
@@ -199,7 +197,7 @@ function Attractor() {
     _state = AttractorState.PRIMARY;
 
     startTime = millis();
-    primaryLifetime = random(3000,7000);
+    primaryLifetime = random(3000,10000);
     secondaryLifetime = 10000;//random(5000,10000);
 
     xy0 = new p5.Vector(
@@ -209,12 +207,14 @@ function Attractor() {
     ultimateDiameter = windowWidth/floor(random(1,6));
     durationToUltimateDiameter = 1000;
     if ( ultimateDiameter >= windowWidth/2 ) {
-      durationToUltimateDiameter *= 4;
+      durationToUltimateDiameter *= 5;
     } else if ( ultimateDiameter >= windowWidth/3 ) {
-      durationToUltimateDiameter *= 3;
+      durationToUltimateDiameter *= 4;
     } else if ( ultimateDiameter >= windowWidth/4 ) {
+      durationToUltimateDiameter *= 3;
+    } else if ( ultimateDiameter >= windowWidth/5 ) {
       durationToUltimateDiameter *= 2;
-    }
+}
 
     var maxSpeed = 0.5 * windowWidth/ultimateDiameter;
     var ultimateVelocity = new p5.Vector(random(-maxSpeed,maxSpeed), random(-maxSpeed,maxSpeed));
