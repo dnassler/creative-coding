@@ -192,6 +192,8 @@ var Camera = function() {
     _angle = {x:0,y:0,z:0};
     _angle.x = PI/6;
     _beginAnimationRotationY( random(-TWO_PI,TWO_PI) );
+    _beginAnimationRotationX( random(-TWO_PI,TWO_PI) );
+    _beginAnimationMoveZ( random(-1000) );
   }
   _init();
 
@@ -200,26 +202,47 @@ var Camera = function() {
     _animateRotationY( newAngleDelta, random(100,500) ).then( function() {
         _beginAnimationRotationY( random(-TWO_PI,TWO_PI) );
     });
+  }
 
+  function _beginAnimationRotationX( newAngleDelta ) {
+    _animateRotationX( newAngleDelta, random(100,500) ).then( function() {
+        _beginAnimationRotationX( random(-TWO_PI,TWO_PI) );
+    });
+
+  }
+
+  function _beginAnimationMoveZ( newPosZ ) {
+    createjs.Tween.get( _pos, {override:true,useTicks:true}).to({z:newPosZ}, random(100,500), createjs.Ease.sineInOut ).call(function() {
+      _beginAnimationMoveZ( random(-1000) );
+    });
   }
 
   function _animateRotationY( newAngleDelta, duration ) {
     return new Promise( function( resolve, reject ) {
       var newAngle = _angle.y + newAngleDelta;
-      // createjs.Tween.get(_angle, {override:true}).to({y:newAngle}, duration, createjs.Ease.sineInOut).call(function() {
-      //   resolve();
-      // });
-      createjs.Tween.get(_angle, {override:true, useTicks:true}).to({y:newAngle}, duration, createjs.Ease.sineInOut).call(function() {
+      createjs.Tween.get(_angle, {useTicks:true}).to({y:newAngle}, duration, createjs.Ease.sineInOut).call(function() {
         resolve();
       });
     });
   }
+
+  function _animateRotationX( newAngleDelta, duration ) {
+    return new Promise( function( resolve, reject ) {
+      var newAngle = _angle.x + newAngleDelta;
+      createjs.Tween.get(_angle, {useTicks:true}).to({x:newAngle}, duration, createjs.Ease.sineInOut).call(function() {
+        resolve();
+      });
+    });
+  }
+
 
   this.update = function() {
     //camera(0,0,sin(frameCount * 0.01) * 500 + 500);
     //camera( _pos.x, _pos.y, _pos.z );
     //rotateX(PI/6);
     //rotateY(-TWO_PI * mouseX/width);
+    translate( 0, 0, _pos.z );
+
     rotateX( _angle.x );
     rotateY( _angle.y );
   };
