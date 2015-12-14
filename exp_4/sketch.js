@@ -1,9 +1,4 @@
 
-var b0 = 0;
-function b0Change() {
-  b0 = random(0,255);
-  window.setTimeout(b0Change,1000);
-}
 
 var ColorMgr = function() {
   var _colorIndex = 0;
@@ -106,14 +101,22 @@ var Thing = function() {
   var _pos;
   var _size;
   var _offsetHeight;
+  var _showLight;
+
+  var _randomShowLight = function() {
+    _showLight = floor(random(2)) >= 1 ? true : false;
+  };
 
   var _init = function() {
     _color = cm.getNewColor();
+    _randomShowLight();
     _pos = pm.getFreePosition();
     pm.reservePos( _pos, _self );
     _size = {w:1, h:floor(random(1,3))};
   };
   _init();
+
+  this.randomShowLight = _randomShowLight;
 
   this.getGridPoint = function() {
     return _pos;
@@ -131,11 +134,23 @@ var Thing = function() {
     pm.translateToThingPos( _self );
 
     ambientMaterial(_color);
+
     //ambientMaterial(b0+random(-100,100),random(100,120),random(200,220));
     //specularMaterial(b0+random(-100,100),random(100,120),random(200,220));
 
     translate( 0, -30*(_size.h + _offsetHeight - 1), 0 );
-    box( 30 * _size.w, 30 * (_size.h + _offsetHeight), 30 * _size.w);
+    var h = 30 * (_size.h + _offsetHeight);
+    box( 30 * _size.w, h, 30 * _size.w);
+
+    if ( h > 0 ) {
+
+      translate( 0, -h-10, 0 );
+      if ( _showLight ) {
+        basicMaterial(_color);
+      }
+      box( 30 * _size.w, 10, 30 * _size.w );
+
+    }
     pop();
 
   };
@@ -149,14 +164,25 @@ var ThingMgr = function() {
 
   var _init = function() {
     _thingArr = [];
+    _resetShowLightsAt = millis() + 1000;//random(1000,5000);
   };
   _init();
+
+  var _resetShowLights = function() {
+    _thingArr.forEach( function(thing) {
+      thing.randomShowLight();
+    });
+    _resetShowLightsAt = millis() + 1000;//random(1000,5000);
+  };
 
   this.createNewThing = function() {
     _thingArr.push( new Thing() );
   };
 
   this.update = function() {
+    if ( _resetShowLightsAt < millis() ) {
+      _resetShowLights();
+    }
     _thingArr.forEach( function(thing) {
       thing.update();
     });
@@ -257,7 +283,7 @@ function setup() {
   // uncomment this line to make the canvas the full size of the window
   createCanvas(windowWidth, windowHeight, WEBGL);
   //ortho(-width/2, width/2, height/2, -height/2, 0.1, 100);
-  b0Change();
+  //b0Change();
 
   cm = new ColorMgr();
   pm = new PositionMgr();
