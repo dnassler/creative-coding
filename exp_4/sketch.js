@@ -1,3 +1,7 @@
+var cm;
+var pm;
+var tm;
+var cam;
 
 
 var ColorMgr = function() {
@@ -123,8 +127,10 @@ var Thing = function() {
   };
 
   this.update = function() {
-    //_offsetHeight = 5*sin((millis()+_pos.row*100+_pos.col*100)/PI/100.0); //frameCount * 0.01
-    _offsetHeight = 5*sin((frameCount+_pos.row*8+_pos.col*8)*0.05); //frameCount * 0.01
+    //_offsetHeight = 5*sin((millis()+_pos.row*100+_pos.col*100)/PI/100.0);
+    //_offsetHeight = 5 * sin((frameCount+_pos.row*8+_pos.col*8)*tm.getWaveFreqFactor());
+    _offsetHeight = 5 * sin((frameCount+_pos.row*8+_pos.col*8)*tm.getWaveFreqFactor());
+    console.log('thing.update tm.getWaveFreqFactor()='+tm.getWaveFreqFactor());
 
   };
 
@@ -161,10 +167,20 @@ var ThingMgr = function() {
 
   var _self = this;
   var _thingArr;
+  var _attr = {waveFreqFactor: 0.05};
+  var _resetThingsAt;
+  var _resetShowLightsAt;
+  var _resetWaveFreqAt;
 
   var _init = function() {
     _thingArr = [];
     _resetShowLightsAt = millis() + 1000;//random(1000,5000);
+    var resetThingsDur = random(1000,60000);
+    _resetThingsAt = millis() + resetThingsDur;
+    //_resetWaveFreqAt = millis() + random( 10000, 30000 );
+    _resetWaveFreqAt = millis() + 10000;//random( 10000, 10100 );
+
+
   };
   _init();
 
@@ -175,6 +191,19 @@ var ThingMgr = function() {
     _resetShowLightsAt = millis() + 1000;//random(1000,5000);
   };
 
+  this.getWaveFreqFactor = function() {
+    return _attr.waveFreqFactor;
+  }
+  var _resetWaveFreq = function() {
+    //this.waveFreqFactor = random(0.01, 0.1);
+    var newFreq = random(0.001, 0.1);
+    //console.log('reset wave freq newFreq='+newFreq);
+    _attr.waveFreqFactor = newFreq;
+    //createjs.Tween.get(_attr,{override:true}).to({waveFreqFactor:newFreq}, 1000, createjs.Ease.sineInOut );
+    _resetWaveFreqAt = millis() + 10000;//random( 10000, 10100 );
+
+  };
+
   this.createNewThing = function() {
     _thingArr.push( new Thing() );
   };
@@ -183,6 +212,12 @@ var ThingMgr = function() {
     if ( _resetShowLightsAt < millis() ) {
       _resetShowLights();
     }
+    if ( _resetThingsAt < millis() ) {
+      this.resetThings();
+    }
+    // if ( _resetWaveFreqAt < millis() ) {
+    //   _resetWaveFreq();
+    // }
     _thingArr.forEach( function(thing) {
       thing.update();
     });
@@ -196,12 +231,16 @@ var ThingMgr = function() {
   };
 
   this.resetThings = function() {
+    var resetThingsDur = random(1000,60000);
+    pm.reset();
     _init();
     var numThings = random(15,70);
     var i;
     for ( i=0; i<numThings; i++ ) {
       _self.createNewThing();
     }
+    _resetWaveFreq();
+    _resetThingsAt = millis() + resetThingsDur;
   };
 
 };
@@ -274,10 +313,6 @@ var Camera = function() {
   };
 };
 
-var cm;
-var pm;
-var tm;
-var cam;
 
 function setup() {
   // uncomment this line to make the canvas the full size of the window
@@ -345,7 +380,6 @@ function mouseClicked() {
 
 function keyTyped() {
   if (key === 'a') {
-    pm.reset();
     tm.resetThings();
   }
   return false; // prevent any default behavior
