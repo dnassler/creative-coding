@@ -255,9 +255,10 @@ var Camera = function() {
     camera(0,0,0);
     _pos = {x:0,y:0,z:0};
     _angle = {x:0,y:0,z:0};
-    _angle.x = PI/6;
+    _angle.x = PI/12;
     _beginAnimationRotationY( random(-TWO_PI,TWO_PI) );
-    _beginAnimationRotationX( random(-TWO_PI,TWO_PI) );
+    // _beginAnimationRotationX( random(-TWO_PI,TWO_PI) );
+    _beginAnimationRotationX( PI/6 );
     _beginAnimationMoveZ( random(-1000) );
   }
   _init();
@@ -269,9 +270,9 @@ var Camera = function() {
     });
   }
 
-  function _beginAnimationRotationX( newAngleDelta ) {
-    _animateRotationX( newAngleDelta, random(100,500) ).then( function() {
-        _beginAnimationRotationX( random(-TWO_PI,TWO_PI) );
+  function _beginAnimationRotationX( newAngleOrAngleDelta ) {
+    _animateRotationX( newAngleOrAngleDelta, random(100,500), false ).then( function() {
+        _beginAnimationRotationX( random(-HALF_PI,HALF_PI) );
     });
 
   }
@@ -291,9 +292,9 @@ var Camera = function() {
     });
   }
 
-  function _animateRotationX( newAngleDelta, duration ) {
+  function _animateRotationX( newAngleOrAngleDelta, duration, isDelta ) {
     return new Promise( function( resolve, reject ) {
-      var newAngle = _angle.x + newAngleDelta;
+      var newAngle = isDelta ? _angle.x + newAngleOrAngleDelta : newAngleOrAngleDelta;
       createjs.Tween.get(_angle, {useTicks:true}).to({x:newAngle}, duration, createjs.Ease.sineInOut).call(function() {
         resolve();
       });
