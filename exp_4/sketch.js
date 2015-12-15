@@ -105,6 +105,7 @@ var Thing = function() {
   var _pos;
   var _size;
   var _offsetHeight;
+  var _lastOffsetHeight;
   var _showLight;
 
   var _randomShowLight = function() {
@@ -129,17 +130,22 @@ var Thing = function() {
   this.update = function() {
     //_offsetHeight = 5*sin((millis()+_pos.row*100+_pos.col*100)/PI/100.0);
     //_offsetHeight = 5 * sin((frameCount+_pos.row*8+_pos.col*8)*tm.getWaveFreqFactor());
+    _lastOffsetHeight = _offsetHeight;
     _offsetHeight = 5 * sin((frameCount+_pos.row*8+_pos.col*8)*tm.getWaveFreqFactor());
-    console.log('thing.update tm.getWaveFreqFactor()='+tm.getWaveFreqFactor());
+    if ( _lastOffsetHeight === undefined ) {
+      _lastOffsetHeight = _offsetHeight;
+    }
+    //console.log('thing.update tm.getWaveFreqFactor()='+tm.getWaveFreqFactor());
 
   };
 
-  this.draw = function() {
+  this.draw = function(alpha) {
     push();
     //translate(i*30*4,j*30*4,0);
     pm.translateToThingPos( _self );
 
-    ambientMaterial(_color);
+    var c = color(red(_color)*alpha,green(_color)*alpha,blue(_color)*alpha);
+    ambientMaterial(c);
 
     //ambientMaterial(b0+random(-100,100),random(100,120),random(200,220));
     //specularMaterial(b0+random(-100,100),random(100,120),random(200,220));
@@ -149,13 +155,16 @@ var Thing = function() {
     box( 30 * _size.w, h, 30 * _size.w);
 
     if ( h > 0 ) {
-
       translate( 0, -h-10, 0 );
-      if ( _showLight ) {
+      if ( _lastOffsetHeight < _offsetHeight ) {
         basicMaterial(_color);
+      } else {
+        ambientMaterial(160,30,20);
       }
+      // if ( _showLight ) {
+      //   basicMaterial(_color);
+      // }
       box( 30 * _size.w, 10, 30 * _size.w );
-
     }
     pop();
 
@@ -167,19 +176,29 @@ var ThingMgr = function() {
 
   var _self = this;
   var _thingArr;
-  var _attr = {waveFreqFactor: 0.05};
+  var _attr = {
+    waveFreqFactor: 0.05,
+    scale: 1,
+    alpha: 1
+  };
   var _resetThingsAt;
+  var _fadingThings = false;
   var _resetShowLightsAt;
   var _resetWaveFreqAt;
 
   var _init = function() {
     _thingArr = [];
     _resetShowLightsAt = millis() + 1000;//random(1000,5000);
-    var resetThingsDur = random(1000,60000);
+    var resetThingsDur = random(30000,60000);
     _resetThingsAt = millis() + resetThingsDur;
     //_resetWaveFreqAt = millis() + random( 10000, 30000 );
     _resetWaveFreqAt = millis() + 10000;//random( 10000, 10100 );
+    _attr.scale = 1;
+    _attr.alpha = 0;
 
+    createjs.Tween.get(_attr).to({alpha:1}, 5000, createjs.Ease.cubicInOut).call(function() {
+      resolve();
+    });
 
   };
   _init();
@@ -196,7 +215,7 @@ var ThingMgr = function() {
   }
   var _resetWaveFreq = function() {
     //this.waveFreqFactor = random(0.01, 0.1);
-    var newFreq = random(0.001, 0.1);
+    var newFreq = random(0.001, 0.04);
     //console.log('reset wave freq newFreq='+newFreq);
     _attr.waveFreqFactor = newFreq;
     //createjs.Tween.get(_attr,{override:true}).to({waveFreqFactor:newFreq}, 1000, createjs.Ease.sineInOut );
@@ -212,8 +231,10 @@ var ThingMgr = function() {
     if ( _resetShowLightsAt < millis() ) {
       _resetShowLights();
     }
-    if ( _resetThingsAt < millis() ) {
-      this.resetThings();
+    if ( !_fadingThings && _resetThingsAt < millis() ) {
+      this.fadeThings().then(function() {
+        _self.resetThings();
+      });
     }
     // if ( _resetWaveFreqAt < millis() ) {
     //   _resetWaveFreq();
@@ -224,14 +245,27 @@ var ThingMgr = function() {
   };
 
   this.draw = function() {
+    //scale(1,1,_attr.scale);
     translate(-pm.getGridWidth()/2,0,-pm.getGridWidth()/2);
     _thingArr.forEach( function(thing) {
-      thing.draw();
+      thing.draw(_attr.alpha);
+    });
+  };
+
+  this.fadeThings = function(duration) {
+    _fadingThings = true;
+    return new Promise(function(resolve, reject) {
+      createjs.Tween.get(_attr).to({alpha:0}, duration ? duration : 5000, createjs.Ease.cubicInOut).call(function() {
+        window.setTimeout(function(){
+          _fadingThings = false;
+          resolve();
+        }, random(2000,10000));
+      });
     });
   };
 
   this.resetThings = function() {
-    var resetThingsDur = random(1000,60000);
+    var resetThingsDur = random(30000,60000);
     pm.reset();
     _init();
     var numThings = random(15,70);
