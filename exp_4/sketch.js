@@ -131,7 +131,7 @@ var Thing = function() {
     //_offsetHeight = 5*sin((millis()+_pos.row*100+_pos.col*100)/PI/100.0);
     //_offsetHeight = 5 * sin((frameCount+_pos.row*8+_pos.col*8)*tm.getWaveFreqFactor());
     _lastOffsetHeight = _offsetHeight;
-    _offsetHeight = 5 * sin((frameCount+_pos.row*8+_pos.col*8)*tm.getWaveFreqFactor());
+    _offsetHeight = 10 * sin((frameCount+_pos.row*8+_pos.col*8)*tm.getWaveFreqFactor());
     if ( _lastOffsetHeight === undefined ) {
       _lastOffsetHeight = _offsetHeight;
     }
@@ -196,7 +196,7 @@ var ThingMgr = function() {
     _attr.scale = 1;
     _attr.alpha = 0;
 
-    createjs.Tween.get(_attr).to({alpha:1}, 5000, createjs.Ease.cubicInOut).call(function() {
+    createjs.Tween.get(_attr).to({alpha:1}, random(5000,15000), createjs.Ease.cubicInOut).call(function() {
       resolve();
     });
 
@@ -255,7 +255,7 @@ var ThingMgr = function() {
   this.fadeThings = function(duration) {
     _fadingThings = true;
     return new Promise(function(resolve, reject) {
-      createjs.Tween.get(_attr).to({alpha:0}, duration ? duration : 5000, createjs.Ease.cubicInOut).call(function() {
+      createjs.Tween.get(_attr).to({alpha:0}, duration ? duration : random(5000,15000), createjs.Ease.cubicInOut).call(function() {
         window.setTimeout(function(){
           _fadingThings = false;
           resolve();
