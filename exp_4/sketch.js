@@ -196,7 +196,7 @@ var ThingMgr = function() {
     _attr.scale = 1;
     _attr.alpha = 0;
 
-    createjs.Tween.get(_attr).to({alpha:1}, random(5000,15000), createjs.Ease.cubicInOut).call(function() {
+    createjs.Tween.get(_attr).to({alpha:1}, random(10000,20000), createjs.Ease.cubicInOut).call(function() {
       resolve();
     });
 
@@ -255,7 +255,7 @@ var ThingMgr = function() {
   this.fadeThings = function(duration) {
     _fadingThings = true;
     return new Promise(function(resolve, reject) {
-      createjs.Tween.get(_attr).to({alpha:0}, duration ? duration : random(5000,15000), createjs.Ease.cubicInOut).call(function() {
+      createjs.Tween.get(_attr).to({alpha:0}, duration ? duration : random(10000,20000), createjs.Ease.cubicInOut).call(function() {
         window.setTimeout(function(){
           _fadingThings = false;
           resolve();
