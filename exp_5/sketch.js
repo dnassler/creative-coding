@@ -253,8 +253,12 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
   var _moveToRow = function() {
     return new Promise( function(resolve, reject) {
       if ( _fromPos.row !== _destPos.row ) {
+        var rotation = floor(random(2));
+        var ry = rotation === 0 ? floor(random(-1,2))*PI/2 : _attr.angleY;
+        var duration = 2000;
+        createjs.Tween.get(_attr).to({angleY:ry}, duration, createjs.Ease.sineInOut);
         createjs.Tween.get(_attr.pos)
-          .to({row:_destPos.row}, 2000, createjs.Ease.sineInOut)
+          .to({row:_destPos.row}, duration, createjs.Ease.sineInOut)
           .call( function(){
             resolve();
           });
@@ -266,8 +270,12 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
   var _moveToCol = function() {
     return new Promise( function(resolve, reject) {
       if ( _fromPos.col !== _destPos.col ) {
+        var rotation = floor(random(2));
+        var ry = rotation === 0 ? floor(random(-1,2))*PI/2 : _attr.angleY;
+        var duration = 2000;
+        createjs.Tween.get(_attr).to({angleY:ry}, duration, createjs.Ease.sineInOut);
         createjs.Tween.get(_attr.pos)
-          .to({col:_destPos.col}, 2000, createjs.Ease.sineInOut)
+          .to({col:_destPos.col}, duration, createjs.Ease.sineInOut)
           .call( function(){
             resolve();
           } );
@@ -306,6 +314,7 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
 
   this.kill = function(){
     createjs.Tween.removeTweens( _attr );
+    createjs.Tween.removeTweens( _attr.pos );
     this.isKilled = true;
   };
   this.isKilled = false;
