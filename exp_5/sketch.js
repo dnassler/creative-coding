@@ -196,63 +196,128 @@ var Thing = function() {
 var Floater = function( fromThing, fromPos, destThing, destPos ) {
   var _self = this;
 
-  var SKY_HEIGHT = 400;
-
   var _fromThing = fromThing;
   var _destThing = destThing;
 
   var _fromPos = {};
   var _destPos = {};
 
+  var _isInSky = false;
+  var _isInSpace = false;
+
+  var _flyAltitude;
+
   var _color;
 
   var _attr = {
     pos: {row:-1,col:-1},
-    height: SKY_HEIGHT,
+    height: 0,
     angleX: 0,
     angleY: 0,
-    angleZ: 0
+    angleZ: 0,
+    alpha: 1
   };
 
   var _init = function() {
     _color = color(255,255,255);
     if ( fromThing ) {
-      var fromThingPos = fromThing.getGridPoint();
-      _fromPos.row = fromThingPos.row;
-      _fromPos.col = fromThingPos.col;
-    } else {
-      _fromPos = fromPos;
+      fromPos = fromThing.getGridPoint();
+      _attr.height = _fromThing.floaterHeight();
     }
+    _fromPos.row = fromPos.row;
+    _fromPos.col = fromPos.col;
+
     if ( destThing ) {
-      var destThingPos = destThing.getGridPoint();
-      _destPos.row = destThingPos.row;
-      _destPos.col = destThingPos.col;
+      destPos = destThing.getGridPoint();
+    }
+    if ( destPos ) {
+      _destPos.row = destPos.row;
+      _destPos.col = destPos.col;
     } else {
-      _destPos = destPos;
+      _destPos.row = _fromPos.row;
+      _destPos.col = _fromPos.col;
     }
 
-    _attr.pos = _fromPos;
-    _attr.height = _fromThing.floaterHeight();
+    _attr.pos.row = _fromPos.row;
+    _attr.pos.col = _fromPos.col;
 
   };
   _init();
 
-  var _launchToSky = function() {
+  var _setNewDestinationThing = function( destThing ) {
+    var destThingPos = destThing.getGridPoint();
+    _destPos.row = destThingPos.row;
+    _destPos.col = destThingPos.col;
+    _destThing = destThing;
+  };
+  this.setNewDestinationThing = _setNewDestinationThing;
+
+  this.getFlyAltitude = function() {
+    return _flyAltitude;
+  }
+
+  this.setHeightToSpace = function() {
+    _attr.height = fm.getSpaceAltitude();
+  };
+
+  this.getDestThing = function(){
+    return _destThing;
+  };
+
+  // note that launch to space will make the floater disappear
+  // but it will not be killed. To kill it set isKilled to true
+  // in the "then" logic of the returned promise.
+  // eg. _launchToSpace(5000).then( function(){ _self.isKilled = true; });
+  var _launchToSpace = function( duration ) {
     return new Promise( function(resolve, reject) {
+
+      if ( !_isInSky && _fromThing ) {
+        _fromThing.setHasFloater(false);
+      }
+      _flyAltitude = fm.getSpaceAltitude();
+
       var rotation = floor(random(4));
       var rz = rotation === 0 ? floor(random(-4,5))*PI : 0;
       var rx = rotation === 1 ? floor(random(-4,5))*PI : 0;
       var ry = rotation === 2 ? floor(random(-2,3))*PI/2 : 0;
       createjs.Tween.get(_attr)
-        .to({height:SKY_HEIGHT*random(1,1.2), angleX:rx, angleY:ry, angleZ:rz}, 2000, createjs.Ease.sineInOut)
+        .to({height:_flyAltitude, alpha:0, angleX:rx, angleY:ry, angleZ:rz}, duration ? duration : 5000, createjs.Ease.sineIn)
         .call( function() {
+          _isInSpace = true;
+          _destThing = _fromThing; // in case it will come back from space later
           resolve();
         });
+
     });
   };
+  this.launchToSpace = _launchToSpace;
+
+  var _launchToSky = function() {
+    return new Promise( function(resolve, reject) {
+
+      if ( _isInSky || !_fromThing ) {
+        resolve();
+      } else {
+        _fromThing.setHasFloater(false);
+        _flyAltitude = fm.getAvailableFlyAltitude();
+        var rotation = floor(random(4));
+        var rz = rotation === 0 ? floor(random(-4,5))*PI : 0;
+        var rx = rotation === 1 ? floor(random(-4,5))*PI : 0;
+        var ry = rotation === 2 ? floor(random(-2,3))*PI/2 : 0;
+        createjs.Tween.get(_attr)
+          .to({height:_flyAltitude, angleX:rx, angleY:ry, angleZ:rz}, 2000, createjs.Ease.sineInOut)
+          .call( function() {
+            _isInSky = true;
+            resolve();
+          });
+      }
+
+    });
+  };
+
   var _moveToRow = function() {
     return new Promise( function(resolve, reject) {
-      if ( _fromPos.row !== _destPos.row ) {
+      if ( _attr.pos.row !== _destPos.row ) {
         var rotation = floor(random(2));
         var ry = rotation === 0 ? floor(random(-1,2))*PI/2 : _attr.angleY;
         var duration = 2000;
@@ -269,7 +334,7 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
   };
   var _moveToCol = function() {
     return new Promise( function(resolve, reject) {
-      if ( _fromPos.col !== _destPos.col ) {
+      if ( _attr.pos.col !== _destPos.col ) {
         var rotation = floor(random(2));
         var ry = rotation === 0 ? floor(random(-1,2))*PI/2 : _attr.angleY;
         var duration = 2000;
@@ -286,6 +351,23 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
   };
   var _landFromSky = function() {
     return new Promise( function(resolve, reject) {
+      // check if the destination is still ok to land (ie. check if
+      // another floater has landed there) and if not then reject landing
+      if ( !_destThing ) {
+        resolve(ErrMsg.MOVE_WARNING_NO_DESTINATION_THING);
+        return;
+      }
+      if ( _destThing.getHasFloater() ) {
+        reject(ErrMsg.MOVE_FAIL_DEST_OCCUPIED);
+        return;
+      }
+      // check if there are any other floater descending with the
+      // same _destThing
+      if ( fm.otherFloatersWithSameDestination(_self) ) {
+        reject(ErrMsg.MOVE_FAIL_OTHER_FLOATER_WITH_SAME_DESTINATION);
+        return;
+      }
+
       var rotation = floor(random(4));
       var rz = rotation === 0 ? floor(random(-4,5))*PI : _attr.angleZ;
       var rx = rotation === 1 ? floor(random(-4,5))*PI : _attr.angleX;
@@ -293,10 +375,42 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
       createjs.Tween.get(_attr)
         .to({height:_destThing.floaterHeight(), angleX:rx, angleY:ry, angleZ:rz}, 2000, createjs.Ease.sineInOut)
         .call( function(){
+          _isInSky = false;
+          _destThing.setHasFloater(true);
           resolve();
         });
     });
-  }
+  };
+
+  var _landFromSpace = function( duration ) {
+    return new Promise( function(resolve, reject) {
+      // check if the destination is still ok to land (ie. check if
+      // another floater has landed there) and if not then reject landing
+      if ( !_destThing ) {
+        resolve(ErrMsg.MOVE_WARNING_NO_DESTINATION_THING);
+        return;
+      }
+      if ( _destThing.getHasFloater() ) {
+        reject(ErrMsg.MOVE_FAIL_DEST_OCCUPIED);
+        return;
+      }
+
+      var rotation = floor(random(4));
+      var rz = rotation === 0 ? floor(random(-4,5))*PI : _attr.angleZ;
+      var rx = rotation === 1 ? floor(random(-4,5))*PI : _attr.angleX;
+      var ry = rotation === 2 ? floor(random(-2,3))*PI/2 : _attr.angleY;
+      createjs.Tween.get(_attr)
+        .to({height:_destThing.floaterHeight(), alpha:1, angleX:rx, angleY:ry, angleZ:rz}, duration ? duration : 5000, createjs.Ease.sineOut)
+        .call( function(){
+          _isInSky = false;
+          _isInSpace = false;
+          _destThing.setHasFloater(true);
+          resolve();
+        });
+    });
+  };
+  this.landFromSpace = _landFromSpace;
+
 
   var _moveToDest = function() {
     return _launchToSky()
@@ -308,6 +422,17 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
       })
       .then( function() {
         return _landFromSky();
+      })
+      .catch( function(err) {
+        console.log("ERROR: "+err);
+        if ( err === ErrMsg.MOVE_FAIL_DEST_OCCUPIED
+          || err === ErrMsg.MOVE_FAIL_OTHER_FLOATER_WITH_SAME_DESTINATION ) {
+          var newDestThing = tm.getRandomThingWithoutFloater();
+          _setNewDestinationThing( newDestThing );
+          return _moveToDest();
+        } else {
+          throw err;
+        }
       });
   };
   this.moveToDest = _moveToDest;
@@ -320,12 +445,19 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
   this.isKilled = false;
 
   this.update = function() {
+    //TODO: check here in case where floater is descending to ensure that
+    //it will not collide with another landed-floater or another floater
+    //descending at the same time.
+
+    // check all floaters that are descending and that are less than
+    // half of SKY_HEIGHT maybe
 
   };
 
   this.draw = function() {
     push();
-    ambientMaterial(_color);
+    var c = color(red(_color),green(_color),blue(_color),_attr.alpha*255);
+    ambientMaterial(c);
     pm.translateToGridPos( _attr.pos );
     translate(0,_attr.height*-1,0);
     rotateX(_attr.angleX);
@@ -339,8 +471,20 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
 
 };
 
+var ErrMsg = {
+  MOVE_FAIL_DEST_OCCUPIED: 'MOVE_FAIL_DEST_OCCUPIED',
+  MOVE_FAIL_NO_FLOATERS: 'MOVE_FAIL_NO_FLOATERS',
+  MOVE_FAIL_NO_FREE_DESTINATIONS: 'MOVE_FAIL_NO_FREE_DESTINATIONS',
+  MOVE_WARNING_NO_DESTINATION_THING: 'MOVE_WARNING_NO_DESTINATION_THING',
+  MOVE_FAIL_OTHER_FLOATER_WITH_SAME_DESTINATION: 'MOVE_FAIL_OTHER_FLOATER_WITH_SAME_DESTINATION'
+};
+
 var FloaterMgr = function() {
   var _floaterArr;
+
+  var SKY_HEIGHT = 400;
+  var SPACE_ALTITUDE = 1000;
+  var MIN_FLOATER_FLY_ALTITUDE_SEPARATION = 20;
 
   var _init = function() {
     _floaterArr = [];
@@ -355,12 +499,60 @@ var FloaterMgr = function() {
     _init();
   };
 
-  var _newFloater = function( fromThing, toThing ) {
+  this.getSpaceAltitude = function() {
+    return SPACE_ALTITUDE;
+  };
+
+  this.getAvailableFlyAltitude = function() {
+    var availableAltitude;
+    var checkAltitude = SKY_HEIGHT*random(0.8,1);
+    while ( !availableAltitude ) {
+      var isOccupied = false;
+      _floaterArr.forEach( function( floater ) {
+        var floaterFlyAltitude = floater.getFlyAltitude();
+        if ( floaterFlyAltitude ) {
+          if ( abs(floaterFlyAltitude - checkAltitude) < MIN_FLOATER_FLY_ALTITUDE_SEPARATION ) {
+            isOccupied = true;
+          }
+        }
+      });
+      if ( !isOccupied ) {
+        availableAltitude = checkAltitude;
+        break;
+      } else {
+        checkAltitude += MIN_FLOATER_FLY_ALTITUDE_SEPARATION;
+      }
+    }
+    return availableAltitude;
+  };
+
+  var _otherFloatersWithSameDestination = function( floater, destThingIn ) {
+    var destThing = floater ? floater.getDestThing() : destThingIn;
+    var sameDestFloaterArr = [];
+    var aFloaterWithSameDest = _floaterArr.find(function(floaterElement){
+      if ( floater && floater === floaterElement ) {
+        return false; // skip the input floater
+      }
+      var floaterElementDestThing = floaterElement.getDestThing();
+      if ( destThing === floaterElementDestThing ) {
+        return true;
+      }
+      return false;
+    });
+    if ( !aFloaterWithSameDest ) {
+      return false;
+    }
+    return true;
+  };
+  this.otherFloatersWithSameDestination = _otherFloatersWithSameDestination;
+
+  var _moveFloater = function( fromThing, toThing ) {
     if ( !fromThing ) {
       fromThing = tm.getRandomThingWithFloater();
       //TODO: handle case where there is no fromThing available
       if ( !fromThing ) {
         console.log("ERROR: cannot find thing with floater to move.");
+        return;
       }
     }
     if ( !toThing ) {
@@ -368,27 +560,95 @@ var FloaterMgr = function() {
       //TODO: handle case where there is no toThing available
       if ( !toThing ) {
         console.log("ERROR: cannot find thing without floater to move.");
+        return;
       }
     }
     var floater = new Floater( fromThing, null, toThing, null );
     _floaterArr.push( floater );
 
-    fromThing.setHasFloater( false );
+    //fromThing.setHasFloater( false );
+
     floater.moveToDest().then(function(){
-      var floaterIndex = _floaterArr.indexOf(floater);
-      if ( floaterIndex >= 0 ) {
-        _floaterArr.splice(floaterIndex,1);
-        toThing.setHasFloater( true );
+      floater.isKilled = true;
+      // var floaterIndex = _floaterArr.indexOf(floater);
+      // if ( floaterIndex >= 0 ) {
+      //   _floaterArr.splice(floaterIndex,1);
+      // }
+    })
+    .catch(function(err){
+      console.log("ERROR: "+err);
+    });
+
+  };
+  this.moveFloater = _moveFloater;
+
+  var _findAndLaunchFloaterToSpace = function() {
+    return new Promise( function(resolve,reject){
+      var fromThing = tm.getRandomThingWithFloater();
+      if ( !fromThing ) {
+        reject(ErrMsg.MOVE_FAIL_NO_FLOATERS);
       } else {
-        fromThing.setHasFloater( true );
+        var floater = new Floater( fromThing );
+        _floaterArr.push( floater );
+        floater.launchToSpace().then(function(){
+          floater.isKilled = true;
+          resolve();
+        }).catch(function(err) {
+          console.log("ERROR: "+err);
+          floater.isKilled = true;
+          reject(err);
+        });
+      }
+    });
+
+  };
+  this.findAndLaunchFloaterToSpace = _findAndLaunchFloaterToSpace;
+
+  var _landNewFloaterFromSpace = function() {
+    return new Promise( function(resolve,reject) {
+      var toThing;
+      var checkCount = 0;
+      while ( !toThing && checkCount < 10 ) {
+        var checkThing = tm.getRandomThingWithoutFloater();
+        if ( !_otherFloatersWithSameDestination(null,checkThing) ) {
+          toThing = checkThing;
+          break;
+        }
+        checkCount += 1;
+      }
+      if ( !toThing ) {
+        reject(ErrMsg.MOVE_FAIL_NO_FREE_DESTINATIONS);
+      } else {
+        var toThingPos = toThing.getGridPoint();
+        var fromPos = {row:toThingPos.row, col:toThingPos.col};
+        var floater = new Floater(null, fromPos, toThing );
+        floater.setHeightToSpace();
+        _floaterArr.push( floater );
+        floater.landFromSpace().then(function(){
+          floater.isKilled = true;
+          resolve();
+        }).catch(function(err) {
+          console.log("ERROR: "+err);
+          floater.isKilled = true;
+          reject(err);
+        });
       }
     });
   };
-  this.newFloater = _newFloater;
+  this.landNewFloaterFromSpace = _landNewFloaterFromSpace;
 
   this.update = function() {
     _floaterArr.forEach( function(floater) {
       floater.update();
+    });
+    var killedFloaters = _floaterArr.filter(function(floater){
+      return floater.isKilled;
+    });
+    killedFloaters.forEach( function(floater) {
+      var floaterIndex = _floaterArr.indexOf(floater);
+      if ( floaterIndex >= 0 ) {
+        _floaterArr.splice(floaterIndex,1);
+      }
     });
   };
 
@@ -422,6 +682,8 @@ var ThingMgr = function() {
     _resetShowLightsAt = millis() + 1000;//random(1000,5000);
     var resetThingsDur = random(30000,60000);
     _resetThingsAt = millis() + resetThingsDur;
+    _newFloaterAt = millis() + random(3000,5000);
+    _removeFloaterAt = millis() + random(3000,5000);
     //_resetWaveFreqAt = millis() + random( 10000, 30000 );
     _resetWaveFreqAt = millis() + 10000;//random( 10000, 10100 );
     _attr.scale = 1;
@@ -490,7 +752,15 @@ var ThingMgr = function() {
     // }
     if ( _launchNewFloaterAt < millis() ) {
       _launchNewFloaterAt = millis() + 4000;
-      fm.newFloater();
+      fm.moveFloater();
+    }
+    if ( _newFloaterAt < millis() ) {
+      _newFloaterAt = millis() + random(3000,5000);
+      fm.landNewFloaterFromSpace();
+    }
+    if ( _removeFloaterAt < millis() ) {
+      _removeFloaterAt = millis() + random(3000,5000);
+      fm.findAndLaunchFloaterToSpace();
     }
     _thingArr.forEach( function(thing) {
       thing.update();
