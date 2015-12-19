@@ -6,9 +6,18 @@ var cam;
 
 var ColorMgr = function() {
   var _colorIndex = 0;
-  var _fromColor = color(50,100,250);
-  var _toColor = color(150,150,100);
+  // var _fromColor = color(50,100,250);
+  // var _toColor = color(150,150,100);
+  var _fromColor;// = color(floor(random(255)),floor(random(255),floor(random(255));
+  var _toColor;// = color(floor(random(255),floor(random(255),floor(random(255));
+
   var _lastColor;
+
+  _reset = function() {
+    _fromColor = color(floor(random(255)),floor(random(255)),floor(random(255)));
+    _toColor = color(floor(random(255)),floor(random(255)),floor(random(255)));
+  };
+  this.reset = _reset;
 
   this.getNewColor = function( colorIndex ) {
     _colorIndex = colorIndex !== undefined ? colorIndex : random(0,1);
@@ -135,6 +144,7 @@ var Thing = function() {
 
   var _init = function() {
     _color = cm.getNewColor();
+    _offsetHeight = 0;
     _randomShowLight();
     _pos = pm.getFreePosition();
     pm.reservePos( _pos, _self );
@@ -456,7 +466,8 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
 
   this.draw = function() {
     push();
-    var c = color(red(_color),green(_color),blue(_color),_attr.alpha*255);
+    //var c = color(red(_color),green(_color),blue(_color),_attr.alpha*255);
+    var c = color(red(_color)*_attr.alpha,green(_color)*_attr.alpha,blue(_color)*_attr.alpha);
     ambientMaterial(c);
     pm.translateToGridPos( _attr.pos );
     translate(0,_attr.height*-1,0);
@@ -582,6 +593,8 @@ var FloaterMgr = function() {
   };
   this.moveFloater = _moveFloater;
 
+
+
   var _findAndLaunchFloaterToSpace = function() {
     return new Promise( function(resolve,reject){
       var fromThing = tm.getRandomThingWithFloater();
@@ -590,7 +603,7 @@ var FloaterMgr = function() {
       } else {
         var floater = new Floater( fromThing );
         _floaterArr.push( floater );
-        floater.launchToSpace().then(function(){
+        floater.launchToSpace(floor(random(2000,6000))).then(function(){
           floater.isKilled = true;
           resolve();
         }).catch(function(err) {
@@ -624,7 +637,7 @@ var FloaterMgr = function() {
         var floater = new Floater(null, fromPos, toThing );
         floater.setHeightToSpace();
         _floaterArr.push( floater );
-        floater.landFromSpace().then(function(){
+        floater.landFromSpace(floor(random(2000,6000))).then(function(){
           floater.isKilled = true;
           resolve();
         }).catch(function(err) {
@@ -699,18 +712,29 @@ var ThingMgr = function() {
   var _getRandomThing = function() {
     return _thingArr[floor(random(_thingArr.length))];
   };
-  var _getRandomThingWithFloater = function() {
-    var thingsWithFloater = _thingArr.filter(function(element) {
+
+  var _thingsWithFloater = function() {
+    return _thingArr.filter(function(element) {
       return element.getHasFloater();
     });
+  };
+  this.thingsWithFloater = _thingsWithFloater;
+
+  var _thingsWithoutFloater = function() {
+    return _thingArr.filter(function(element){
+      return !element.getHasFloater();
+    });
+  };
+  this.thingsWithoutFloater = _thingsWithoutFloater;
+
+  var _getRandomThingWithFloater = function() {
+    var thingsWithFloater = _thingsWithFloater();
     return thingsWithFloater[floor(random(thingsWithFloater.length))];
   }
   this.getRandomThingWithFloater = _getRandomThingWithFloater;
 
   var _getRandomThingWithoutFloater = function() {
-    var thingsWithoutFloater = _thingArr.filter(function(element){
-      return !element.getHasFloater();
-    });
+    var thingsWithoutFloater = _thingsWithoutFloater();
     return thingsWithoutFloater[floor(random(thingsWithoutFloater.length))];
   };
   this.getRandomThingWithoutFloater = _getRandomThingWithoutFloater;
@@ -736,6 +760,18 @@ var ThingMgr = function() {
 
   this.createNewThing = function() {
     _thingArr.push( new Thing() );
+  };
+
+  this.createNewThingNoFloater = function() {
+    var thing = new Thing();
+    thing.setHasFloater( false );
+    _thingArr.push( thing );
+  };
+
+  this.createNewThingWithFloater = function() {
+    var thing = new Thing();
+    thing.setHasFloater( true );
+    _thingArr.push( thing );
   };
 
   this.update = function() {
@@ -788,13 +824,36 @@ var ThingMgr = function() {
   };
 
   this.resetThings = function() {
+    cm.reset();
     pm.reset();
     fm.reset();
     _init();
-    var numThings = random(15,70);
+    var numThings = floor(random(15,70));
     var i;
-    for ( i=0; i<numThings; i++ ) {
-      _self.createNewThing();
+    var mode = random(3);
+    if ( mode < 1 ) {
+      // random things have floater
+      for ( i=0; i<numThings; i++ ) {
+        _self.createNewThing();
+      }
+    } else if ( mode < 2 ) {
+      // things have no floater
+      for ( i=0; i<numThings; i++ ) {
+        _self.createNewThingNoFloater();
+      }
+      var numNewThings = floor(random(numThings));
+      for ( i=0; i<numNewThings; i++ ) {
+        fm.landNewFloaterFromSpace();
+      }
+    } else {
+      // things have floaters
+      for ( i=0; i<numThings; i++ ) {
+        _self.createNewThingWithFloater();
+      }
+      var numThingsToLaunch = floor(random(numThings));
+      for ( i=0; i<numThingsToLaunch; i++ ) {
+        fm.findAndLaunchFloaterToSpace();
+      }
     }
     _resetWaveFreq();
     _resetThingsAt = millis() + random(30000,60000);
@@ -882,10 +941,11 @@ function setup() {
   pm = new PositionMgr();
   tm = new ThingMgr();
 
-  var i;
-  for ( i=0; i<20; i++ ) {
-    tm.createNewThing();
-  }
+  // var i;
+  // for ( i=0; i<20; i++ ) {
+  //   tm.createNewThing();
+  // }
+  tm.resetThings();
 
   cam = new Camera();
 
