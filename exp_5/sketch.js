@@ -274,6 +274,17 @@ var Floater = function( fromThing, fromPos, destThing, destPos ) {
     return _destThing;
   };
 
+  var _fadeOut = function(duration) {
+    return new Promise(function(resolve,reject){
+      createjs.Tween.get(_attr).to({alpha:0.0}, duration, createjs.Ease.cubicInOut)
+        .call(function(){
+          _self.isKilled = true;
+          resolve();
+        });
+    });
+  };
+  this.fadeOut = _fadeOut;
+
   // note that launch to space will make the floater disappear
   // but it will not be killed. To kill it set isKilled to true
   // in the "then" logic of the returned promise.
@@ -491,6 +502,7 @@ var ErrMsg = {
 };
 
 var FloaterMgr = function() {
+  var _self = this;
   var _floaterArr;
 
   var SKY_HEIGHT = 400;
@@ -603,7 +615,7 @@ var FloaterMgr = function() {
       } else {
         var floater = new Floater( fromThing );
         _floaterArr.push( floater );
-        floater.launchToSpace(floor(random(2000,6000))).then(function(){
+        floater.launchToSpace(5000).then(function(){
           floater.isKilled = true;
           resolve();
         }).catch(function(err) {
@@ -616,6 +628,23 @@ var FloaterMgr = function() {
 
   };
   this.findAndLaunchFloaterToSpace = _findAndLaunchFloaterToSpace;
+
+  var _findAndLaunchFloatersToSpaceWithDelays = function(numFloaters){
+    var pArr = [];
+    var i;
+    for (i=0;i<numFloaters;i++){
+      var p = new Promise(function(resolve,reject){
+        createjs.Tween.get(_self).wait(random(10000)).call(function(){
+          _findAndLaunchFloaterToSpace().then(function(){
+            resolve();
+          });
+        });
+      });
+      pArr.push( p );
+    };
+    return Promise.all(pArr);
+  };
+  this.findAndLaunchFloatersToSpaceWithDelays = _findAndLaunchFloatersToSpaceWithDelays;
 
   var _landNewFloaterFromSpace = function() {
     return new Promise( function(resolve,reject) {
@@ -637,7 +666,7 @@ var FloaterMgr = function() {
         var floater = new Floater(null, fromPos, toThing );
         floater.setHeightToSpace();
         _floaterArr.push( floater );
-        floater.landFromSpace(floor(random(2000,6000))).then(function(){
+        floater.landFromSpace(5000).then(function(){
           floater.isKilled = true;
           resolve();
         }).catch(function(err) {
@@ -649,6 +678,32 @@ var FloaterMgr = function() {
     });
   };
   this.landNewFloaterFromSpace = _landNewFloaterFromSpace;
+
+  var _landNewFloatersFromSpaceWithDelays = function(numFloaters){
+    var pArr = [];
+    var i;
+    for (i=0;i<numFloaters;i++){
+      var p = new Promise(function(resolve,reject){
+        createjs.Tween.get(_self).wait(random(10000)).call(function(){
+          _landNewFloaterFromSpace().then(function(){
+            resolve();
+          });
+        });
+      });
+      pArr.push( p );
+    };
+    return Promise.all(pArr);
+  };
+  this.landNewFloatersFromSpaceWithDelays = _landNewFloatersFromSpaceWithDelays;
+
+  var _fadeAllFloaters = function(duration) {
+    var pArr = [];
+    _floaterArr.forEach( function(floater) {
+      pArr.push(floater.fadeOut(duration));
+    });
+    return Promise.all(pArr);
+  };
+  this.fadeAllFloaters = _fadeAllFloaters;
 
   this.update = function() {
     _floaterArr.forEach( function(floater) {
@@ -678,6 +733,8 @@ var fm = new FloaterMgr();
 var ThingMgr = function() {
 
   var _self = this;
+  var _initializationCompleted;
+
   var _thingArr;
   var _attr = {
     waveFreqFactor: 0.05,
@@ -691,6 +748,7 @@ var ThingMgr = function() {
   var _launchNewFloaterAt;
 
   var _init = function() {
+    _initializationCompleted = false;
     _thingArr = [];
     _resetShowLightsAt = millis() + 1000;//random(1000,5000);
     var resetThingsDur = random(30000,60000);
@@ -786,17 +844,21 @@ var ThingMgr = function() {
     // if ( _resetWaveFreqAt < millis() ) {
     //   _resetWaveFreq();
     // }
-    if ( _launchNewFloaterAt < millis() ) {
-      _launchNewFloaterAt = millis() + 4000;
-      fm.moveFloater();
-    }
-    if ( _newFloaterAt < millis() ) {
-      _newFloaterAt = millis() + random(3000,5000);
-      fm.landNewFloaterFromSpace();
-    }
-    if ( _removeFloaterAt < millis() ) {
-      _removeFloaterAt = millis() + random(3000,5000);
-      fm.findAndLaunchFloaterToSpace();
+    if ( _initializationCompleted ) {
+
+      if ( _launchNewFloaterAt < millis() ) {
+        _launchNewFloaterAt = millis() + 4000;
+        fm.moveFloater();
+      }
+      if ( _newFloaterAt < millis() ) {
+        _newFloaterAt = millis() + random(3000,5000);
+        fm.landNewFloaterFromSpace();
+      }
+      if ( _removeFloaterAt < millis() ) {
+        _removeFloaterAt = millis() + random(3000,5000);
+        fm.findAndLaunchFloaterToSpace();
+      }
+
     }
     _thingArr.forEach( function(thing) {
       thing.update();
@@ -815,12 +877,15 @@ var ThingMgr = function() {
 
   this.fadeThings = function(duration) {
     _fadingThings = true;
-    return new Promise(function(resolve, reject) {
-      createjs.Tween.get(_attr).to({alpha:0}, duration ? duration : random(2000,4000), createjs.Ease.cubicInOut).call(function() {
+    var fadeDuration = duration ? duration : random(5000, 10000);
+    var pFadeThings = new Promise(function(resolve, reject) {
+      createjs.Tween.get(_attr).to({alpha:0}, fadeDuration, createjs.Ease.cubicInOut).call(function() {
         _fadingThings = false;
         resolve();
       });
     });
+    var pFadeFloaters = fm.fadeAllFloaters(fadeDuration);
+    return Promise.all([pFadeThings, pFadeFloaters]);
   };
 
   this.resetThings = function() {
@@ -836,24 +901,31 @@ var ThingMgr = function() {
       for ( i=0; i<numThings; i++ ) {
         _self.createNewThing();
       }
+      _initializationCompleted = true;
     } else if ( mode < 2 ) {
       // things have no floater
       for ( i=0; i<numThings; i++ ) {
         _self.createNewThingNoFloater();
       }
-      var numNewThings = floor(random(numThings));
-      for ( i=0; i<numNewThings; i++ ) {
-        fm.landNewFloaterFromSpace();
-      }
+      var numNewThings = floor(numThings/2);
+      fm.landNewFloatersFromSpaceWithDelays(numNewThings).then(function(){
+        _initializationCompleted = true;
+      });
+      // for ( i=0; i<numNewThings; i++ ) {
+      //   fm.landNewFloaterFromSpace();
+      // }
     } else {
       // things have floaters
       for ( i=0; i<numThings; i++ ) {
         _self.createNewThingWithFloater();
       }
-      var numThingsToLaunch = floor(random(numThings));
-      for ( i=0; i<numThingsToLaunch; i++ ) {
-        fm.findAndLaunchFloaterToSpace();
-      }
+      var numThingsToLaunch = floor(numThings/2);
+      fm.findAndLaunchFloatersToSpaceWithDelays(numThingsToLaunch).then(function(){
+        _initializationCompleted = true;
+      });
+      // for ( i=0; i<numThingsToLaunch; i++ ) {
+      //   fm.findAndLaunchFloaterToSpace();
+      // }
     }
     _resetWaveFreq();
     _resetThingsAt = millis() + random(30000,60000);
@@ -871,10 +943,10 @@ var Camera = function() {
     camera(0,0,0);
     _pos = {x:0,y:0,z:0};
     _angle = {x:0,y:0,z:0};
-    _angle.x = PI/12;
+    _angle.x = random(0,HALF_PI);//PI/12;
     _beginAnimationRotationY( random(-TWO_PI,TWO_PI) );
     // _beginAnimationRotationX( random(-TWO_PI,TWO_PI) );
-    _beginAnimationRotationX( PI/6 );
+    _beginAnimationRotationX( random(0,HALF_PI) );
     _beginAnimationMoveZ( random(-1000) );
   }
   _init();
