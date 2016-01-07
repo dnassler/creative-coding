@@ -791,12 +791,6 @@ var ThingMgr = function() {
         _setPattern( ThingsPattern.SINE_WAVE );
         _setWaveFreqFactor(0.05);
         _waveIndexIncFactor = 2;
-      } else if ( patternType === ThingsPattern.FAST ) {
-        _setWaveFreqFactor(0.05);
-        _waveIndexIncFactor = 2;
-      } else if ( patternType === ThingsPattern.SLOW ) {
-        _setWaveFreqFactor(0.01);
-        _waveIndexIncFactor = 1;
       }
       if ( resetThingsFlag ) {
         _resetThings();
