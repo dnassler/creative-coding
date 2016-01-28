@@ -14,6 +14,7 @@ var lookAtVec = new THREE.Vector3(0,0,-numPlanes*planeSeparation);
 var CAMERA_MANUAL = 'manual';
 var CAMERA_LIGHT = 'light';
 var CAMERA_AUTO = 'auto';
+var lineToLight = new THREE.Line3();
 
 init();
 animate();
@@ -124,7 +125,6 @@ function init() {
     gui.add( controlAttr, 'rotateSpeed', 1, 50);
     //gui.add( controlAttr, 'cameraFromLight' );
     gui.add( controlAttr, 'cameraPerspective', [CAMERA_MANUAL, CAMERA_LIGHT, CAMERA_AUTO] );
-
     // gui.add(controlAttr, 'cameraHeight', -300, 1000);
     // gui.add(controlAttr, 'cameraZ', -400, 1000);
 
@@ -183,16 +183,13 @@ function onWindowResize() {
 
 }
 
+
 function animate() {
 
     requestAnimationFrame( animate );
 
     // mesh.rotation.x += 0.01;
     // mesh.rotation.y += 0.02;
-
-    pArr.forEach(function(mi){
-      mi.p.rotation.z += mi.rspeed*controlAttr.rotateSpeed;
-    });
 
     //renderer.render( scene, camera );
     //controls.update(clock.getDelta());
@@ -202,6 +199,16 @@ function animate() {
     light1.position.z = 300 * Math.sin(time*0.2) - 250;
     light1.position.x = 100 * Math.cos(time*0.1);
     light1.position.y = controlAttr.lightHeight;
+
+    pArr.forEach(function(mi){
+      lineToLight.set(light1.position, mi.p.position);
+      var distToLight = lineToLight.distance();
+      if ( distToLight < 300 ) {
+        var rspeedFactor = distToLight < 0.1 ? 100 : 10*100*100/(distToLight*distToLight);
+        rspeedFactor = rspeedFactor > 100 ? 100 : rspeedFactor;
+        mi.p.rotation.z += 0.001*rspeedFactor*controlAttr.rotateSpeed;//mi.rspeed*controlAttr.rotateSpeed * rspeedFactor;
+      }
+    });
 
     if ( controlAttr.cameraPerspective === CAMERA_LIGHT ) {
       var cameraOffsetX = 200 * Math.sin(time*0.1);
@@ -214,6 +221,7 @@ function animate() {
       camera.position.set( ground.position.x + cameraOffsetX, cameraOffsetY, ground.position.z + cameraOffsetZ );
       camera.lookAt(controls.target.x, controls.target.y, controls.target.z);
     }
+
 
 
     controls.update();
