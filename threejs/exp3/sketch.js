@@ -19,13 +19,19 @@ var lineToLight = new THREE.Line3();
 init();
 animate();
 
+//x=-309.1
+//y=25.134
+//z=-446.843
+//zoom=0.5133420832795047
 
 function init() {
 
     scene = new THREE.Scene();
 
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+    var f = .5;
+    //camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
     //camera = new THREE.OrthographicCamera( window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, -200, 1000 );
+    camera = new THREE.OrthographicCamera( window.innerWidth /( - 16*f), window.innerWidth / (16*f), window.innerHeight / (16*f), window.innerHeight / - (16*f), -200, 1000 );
 
 
     var w = 100;
@@ -103,11 +109,15 @@ function init() {
     //var light = new THREE.AmbientLight( 0x000000 ); // soft white light
     scene.add( light );
 
-
-
-
-    camera.position.z = 100;
-    camera.position.y = 0;
+    //x=-309.1
+    //y=25.134
+    //z=-446.843
+    camera.position.set(-309.1, 25.134, -446.843);
+    // camera.zoom = 0.5133420832795047;
+    camera.zoom = 0.46767497911552943;
+    camera.aspect = 2.7195467422096318;
+    //camera.position.z = 100;
+    //camera.position.y = 0;
 
     camera.lookAt( lookAtVec );
 
@@ -117,7 +127,9 @@ function init() {
         //this.lightHeight = light1.position.y;
         this.rotateSpeed = 22;
         //this.cameraFromLight = false;
-        this.cameraPerspective = CAMERA_AUTO;
+        // this.cameraPerspective = CAMERA_AUTO;
+        this.cameraPerspective = CAMERA_MANUAL;
+
     };
 
     var gui = new dat.GUI();
