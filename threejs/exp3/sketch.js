@@ -114,14 +114,14 @@ function init() {
     controlAttr = new function () {
         // this.cameraHeight = camera.position.y;
         // this.cameraZ = camera.position.z;
-        this.lightHeight = light1.position.y;
-        this.rotateSpeed = 1;
+        //this.lightHeight = light1.position.y;
+        this.rotateSpeed = 22;
         //this.cameraFromLight = false;
-        this.cameraPerspective = CAMERA_MANUAL;
+        this.cameraPerspective = CAMERA_AUTO;
     };
 
     var gui = new dat.GUI();
-    gui.add( controlAttr, 'lightHeight', 100, 1000);
+    //gui.add( controlAttr, 'lightHeight', 100, 1000);
     gui.add( controlAttr, 'rotateSpeed', 1, 50);
     //gui.add( controlAttr, 'cameraFromLight' );
     gui.add( controlAttr, 'cameraPerspective', [CAMERA_MANUAL, CAMERA_LIGHT, CAMERA_AUTO] );
@@ -198,7 +198,7 @@ function animate() {
 
     light1.position.z = 300 * Math.sin(time*0.2) - 250;
     light1.position.x = 100 * Math.cos(time*0.1);
-    light1.position.y = controlAttr.lightHeight;
+    light1.position.y = 300 * (Math.cos(time*0.12)+1) + 100;//controlAttr.lightHeight;
 
     pArr.forEach(function(mi){
       lineToLight.set(light1.position, mi.p.position);
@@ -216,7 +216,7 @@ function animate() {
       camera.lookAt(controls.target.x, controls.target.y, controls.target.z);
     } else if ( controlAttr.cameraPerspective === CAMERA_AUTO ) {
       var cameraOffsetX = 400 * Math.sin(time*0.25);
-      var cameraOffsetY = 150 * (Math.sin(time*0.2)+1) + 100;
+      var cameraOffsetY = 150 * (Math.cos(time*0.2)+1) + 100;
       var cameraOffsetZ = 400 * Math.cos(time*0.28);
       camera.position.set( ground.position.x + cameraOffsetX, cameraOffsetY, ground.position.z + cameraOffsetZ );
       camera.lookAt(controls.target.x, controls.target.y, controls.target.z);
