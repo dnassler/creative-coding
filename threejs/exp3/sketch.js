@@ -103,7 +103,7 @@ function init() {
       sound1Helper.auto(1000,20000);
     });
 
-    sound2 = new p5.SoundFile('333991__cryanrautha__computer-robot-droid-ambience.mp3',function(){
+    sound2 = new p5.SoundFile('333991__cryanrautha__computer-robot-droid-ambience.ogg',function(){
       sound2.setVolume( 0 );
       sound2.loop();
     });
