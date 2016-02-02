@@ -9,6 +9,8 @@ var clock = new THREE.Clock();
 var light1;
 var ground;
 var gui;
+var time;
+var lightEntity;
 
 var pArr = [];
 var numPlanes = 10;
@@ -88,30 +90,7 @@ animate();
 
 function init() {
 
-    var soundFile;
-
-    soundFile = new p5.SoundFile('333988__reznik-krkovicka__distant-falling-glass-metal.ogg',function(){
-      //sound1a.play();
-      var labels = [
-        {start:0.690575, end:3.418346, id:1},
-        {start:6.111589,	end:9.391820,	id:2},
-        {start:11.567131,	end:14.916419, id:3},
-        {start:18.610996,	end:21.511410, id:4},
-        {start:22.098399,	end:25.585803, id:5}
-      ];
-      sound1Helper = new SoundHelper( soundFile, labels );
-      sound1Helper.auto(1000,20000);
-    });
-
-    sound2 = new p5.SoundFile('333991__cryanrautha__computer-robot-droid-ambience.ogg',function(){
-      sound2.setVolume( 0 );
-      sound2.loop();
-    });
-
-    windmillSound = new p5.SoundFile('131924__felix-blume__a-windmill-is-squeaking-alone-in-the-desert-usa-arizona.ogg',function(){
-      windmillSound.setVolume(0);
-      windmillSound.loop();
-    });
+    time = Math.random()*10000000;
 
     scene = new THREE.Scene();
 
@@ -327,6 +306,49 @@ function init() {
     //---
     //---
 
+    lightEntity = new LightThing( light1 );
+
+    var soundFile;
+
+    var soundLoadPromiseArr = [];
+
+    soundLoadPromiseArr.push( new Promise(function(resolve, reject){
+      soundFile = new p5.SoundFile('333988__reznik-krkovicka__distant-falling-glass-metal.ogg',function(){
+        //sound1a.play();
+        var labels = [
+          {start:0.690575, end:3.418346, id:1},
+          {start:6.111589,	end:9.391820,	id:2},
+          {start:11.567131,	end:14.916419, id:3},
+          {start:18.610996,	end:21.511410, id:4},
+          {start:22.098399,	end:25.585803, id:5}
+        ];
+        sound1Helper = new SoundHelper( soundFile, labels );
+        sound1Helper.auto(1000,20000);
+        resolve();
+      });
+    }) );
+
+    soundLoadPromiseArr.push( new Promise(function(resolve, reject){
+      sound2 = new p5.SoundFile('333991__cryanrautha__computer-robot-droid-ambience.ogg',function(){
+        sound2.setVolume( 0 );
+        sound2.loop();
+        resolve();
+      });
+    }) );
+
+    soundLoadPromiseArr.push( new Promise(function(resolve, reject){
+      windmillSound = new p5.SoundFile('131924__felix-blume__a-windmill-is-squeaking-alone-in-the-desert-usa-arizona.ogg',function(){
+        windmillSound.setVolume(0);
+        windmillSound.loop();
+        resolve();
+      });
+    }) );
+
+    Promise.all( soundLoadPromiseArr ).then( function() {
+      lightEntity.allowAltitudeDescent();
+    });
+
+
     clock = new THREE.Clock();
 
     stats = new Stats();
@@ -363,13 +385,15 @@ function animate() {
 
     //renderer.render( scene, camera );
     //controls.update(clock.getDelta());
-    var time = clock.getElapsedTime();
+    var delta = clock.getDelta();//.getElapsedTime();
+    time += delta;
 
     var minLight1Height = 100;
 
-    light1.position.z = 300 * Math.sin(time*0.2) - 250;
-    light1.position.x = 100 * Math.cos(time*0.1);
-    light1.position.y = 300 * (Math.cos(time*0.12)+1) + minLight1Height;//controlAttr.lightHeight;
+    lightEntity.update();
+    // light1.position.z = 300 * Math.sin(time*0.2) - 250;
+    // light1.position.x = 100 * Math.cos(time*0.1);
+    // light1.position.y = 300 * (Math.cos(time*0.12)+1) + minLight1Height;//controlAttr.lightHeight;
 
     var distFromMinHeightToLight = light1.position.y - minLight1Height;
     if ( distFromMinHeightToLight < 400 ) {
@@ -399,7 +423,7 @@ function animate() {
       }
     });
 
-    var windmillVolume = (1 - (distFromMinHeightToLight / 400));
+    var windmillVolume = 1;//(1 - (distFromMinHeightToLight / 400));
     if ( maxRotation > 0.1 ) {
       windmillSound.setVolume( maxRotation * windmillVolume );
     } else {
@@ -557,4 +581,79 @@ function changeCameraType( useOrthographicCamera ) {
   camera.updateProjectionMatrix();
 
   controls.update();
+}
+
+function LightThing( light ) {
+
+  var _self = this;
+  var _allowDescent = false;
+  var _clock = new THREE.Clock();
+  var _minLight1Height = 100;
+  var _maxHeight = 400;
+  var _time;
+  var _isMoving;
+
+  this.allowAltitudeDescent = function() {
+    _allowDescent = true;
+    animateAuto();
+  };
+
+  function animateAuto() {
+    _moveDown( Math.random() * 10000 + 5000 ).then( function() {
+      return _wait( Math.random() * 10000 );
+    }).then( function() {
+      return _moveUp( Math.random() * 10000 + 5000 );
+    }).then(function(){
+      return _wait( Math.random() * 10000 );
+    }).then( function() {
+      animateAuto();
+    });
+  }
+
+  function _wait( duration ) {
+    return new Promise(function(resolve,reject){
+      window.setTimeout(function(){
+        resolve();
+      }, duration );
+    });
+  }
+
+  function _moveDown( duration ) {
+    _isMoving = true;
+    return new Promise(function(resolve, reject) {
+      createjs.Tween.get(light.position).to({y:_minLight1Height}, duration ? duration : random(10000,20000), createjs.Ease.cubicInOut).call(function() {
+        _isMoving = false;
+        resolve();
+      });
+    });
+  }
+
+  function _moveUp( duration ) {
+    _isMoving = true;
+    return new Promise(function(resolve, reject) {
+      createjs.Tween.get(light.position).to({y:_maxHeight}, duration ? duration : random(10000,20000), createjs.Ease.cubicInOut).call(function() {
+        _isMoving = false;
+        resolve();
+      });
+    });
+  }
+
+
+  this.update = function() {
+    var delta = _clock.getDelta();
+    _time += delta;
+
+    light.position.z = 300 * Math.sin(_time*0.2) - 250;
+    light.position.x = 100 * Math.cos(_time*0.1);
+    //light.position.y = 300 * (Math.cos(_time*0.12)+1) + _minLight1Height;
+  };
+
+  function init() {
+    _time = 0;
+    _isMoving = false;
+    light.position.set(0,_maxHeight,0);
+    _self.update();
+  }
+  init();
+
 }
