@@ -19,7 +19,7 @@ var lookAtVec = new THREE.Vector3(0,0,-numPlanes*planeSeparation);
 var CAMERA_MANUAL = 'manual';
 var CAMERA_LIGHT = 'light';
 var CAMERA_AUTO = 'auto';
-var CAMERA_PRESET_POINT = 'preset-point';
+// var CAMERA_PRESET_POINT = 'preset-point';
 var cameraPresetPoint;
 var cameraPresetPointArr = [];
 
@@ -213,7 +213,7 @@ function init() {
     gui.add( controlAttr, 'useOrthographicCamera' ).onChange(changeCameraType);
     gui.add( controlAttr, 'rotateSpeed', 1, 50);
     //gui.add( controlAttr, 'cameraFromLight' );
-    gui.add( controlAttr, 'cameraPerspective', [CAMERA_MANUAL, CAMERA_LIGHT, CAMERA_AUTO, CAMERA_PRESET_POINT] );
+    gui.add( controlAttr, 'cameraPerspective', [CAMERA_MANUAL, CAMERA_LIGHT, CAMERA_AUTO] );
     gui.add( controlAttr, 'changeCameraViewPoint' );
     gui.add( controlAttr, 'saveCameraViewpoint' );
     // gui.add(controlAttr, 'cameraHeight', -300, 1000);
