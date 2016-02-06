@@ -1,5 +1,6 @@
 var dm;
 var horizon;
+var showBottomMarker;
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -9,13 +10,14 @@ function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   noStroke();
 
+  showBottomMarker = true;
 
   dotField = new DotField(height);
 
   dm = new DarkMatter();
   dm.moveLoop();
 
-  horizon = new Horizon(height/2);
+  horizon = new Horizon(height- height/10);
 
 }
 
@@ -23,7 +25,9 @@ function draw() {
   background(0);
 
   dotField.draw();
-  //horizon.draw();
+  if ( showBottomMarker ) {
+    horizon.draw();
+  }
 
   if ( explodingSquares.length > 0 ) {
     explodingSquares.forEach(function( item ){
@@ -87,7 +91,7 @@ function DotField( horizonY ) {
           if ( random(100) < 3 ) {
             c = color(255);
             outline = random(100)<2 ? true : false;
-            if ( outline && random(5) < 1 ) {
+            if ( outline && random(5) < 2 ) {
               outline = false; // no outline because there will be explosion instead
               explodingSquares.push( new ExplodingSquare(createVector(i,j), size));
             }
@@ -173,42 +177,81 @@ function Horizon( horizonY ) {
   if (horizonY === undefined) {
     horizonY = height/2;
   }
-  var _attr = { lightSlice : 0, darkSlice : 0 };
-  var _startLightSlice = millis() + 5000;
-  var _endLightSlice;
+  // var _attr = { lightSlice : 0, darkSlice : 0 };
+  // var _startLightSlice = millis() + 5000;
+  // var _endLightSlice;
+  //
+  function update() {
 
-  function updateLightSlice() {
-    if (_startLightSlice && millis() > _startLightSlice) {
-      createjs.Tween.get(_attr).to({lightSlice:height-horizonY}, 10000, createjs.Ease.sineIn).call(function() {
-        _endLightSlice = millis() + 10000;
-      });
-      _startLightSlice = 0;
-    }
-    if (_endLightSlice && millis() > _endLightSlice) {
-      createjs.Tween.get(_attr).to({darkSlice:height-horizonY}, 10000, createjs.Ease.sineIn).call(function() {
-        _startLightSlice = millis() + 10000;
-        _attr.lightSlice = 0;
-        _attr.darkSlice = 0;
-      });
-      _endLightSlice = 0;
-    }
   }
+  //   if (_startLightSlice && millis() > _startLightSlice) {
+  //     createjs.Tween.get(_attr).to({lightSlice:height-horizonY}, 10000, createjs.Ease.sineIn).call(function() {
+  //       _endLightSlice = millis() + 10000;
+  //     });
+  //     _startLightSlice = 0;
+  //   }
+  //   if (_endLightSlice && millis() > _endLightSlice) {
+  //     createjs.Tween.get(_attr).to({darkSlice:height-horizonY}, 10000, createjs.Ease.sineIn).call(function() {
+  //       _startLightSlice = millis() + 10000;
+  //       _attr.lightSlice = 0;
+  //       _attr.darkSlice = 0;
+  //     });
+  //     _endLightSlice = 0;
+  //   }
+  // }
+
 
   this.draw = function() {
     noStroke();
-    fill(50,50,100);
-    rect(0, horizonY, width, height - horizonY);
-    updateLightSlice();
-    if ( _attr.lightSlice > 0 ) {
-      fill(0);
-      rect(0, horizonY, width, _attr.lightSlice);
-    }
-    if ( _attr.darkSlice > 0 ) {
-      fill(50,50,100);
-      rect(0, horizonY, width, _attr.darkSlice);
-    }
 
+    fill(50,50,50);
+    var mw = height-horizonY;
+    rect(0, horizonY, width, mw);
+    rect(0,0, mw,height);
+    update();
+    // if ( _attr.lightSlice > 0 ) {
+    //   fill(0);
+    //   rect(0, horizonY, width, _attr.lightSlice);
+    // }
+    // if ( _attr.darkSlice > 0 ) {
+    //   fill(50,50,100);
+    //   rect(0, horizonY, width, _attr.darkSlice);
+    // }
+    var numMarks = 50;
+    var markSpacing = height/numMarks;
+
+    for (i=0; i<numMarks; i++){
+      if ( i % 5 === 0 ) {
+        fill(100);
+        rect(0,i*markSpacing,mw/2,2);
+      } else {
+        fill(75);
+        rect(0,i*markSpacing,mw/4,2);
+      }
+    }
+    fill(200,50,50);
+    rect(0,dm.position.y, mw, 5);
+
+    var numMarks = 100;
+    var markSpacing = width/numMarks;
+    for (i=0; i<numMarks; i++){
+      if ( i % 10 === 0 ) {
+        fill(100);
+        rect(i*markSpacing,horizonY+(height-horizonY)/4,2,height-horizonY);
+      } else {
+        fill(75);
+        rect(i*markSpacing,horizonY+(height-horizonY)/2,2,height-horizonY);
+      }
+    }
+    fill(200,50,50);
+    rect(dm.position.x, horizonY, 5, height-horizonY);
   };
 
 
+}
+
+function keyPressed() {
+  if (key === ' ') {
+    showBottomMarker = !showBottomMarker;
+  }
 }
