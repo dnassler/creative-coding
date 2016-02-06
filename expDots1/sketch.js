@@ -181,6 +181,7 @@ function Horizon( horizonY ) {
   // var _startLightSlice = millis() + 5000;
   // var _endLightSlice;
   //
+  var aspect = width/height;
   function update() {
 
   }
@@ -207,7 +208,7 @@ function Horizon( horizonY ) {
     fill(50,50,50);
     var mw = height-horizonY;
     rect(0, horizonY, width, mw);
-    rect(0,0, mw,height);
+    //rect(0,0, mw,height);
     update();
     // if ( _attr.lightSlice > 0 ) {
     //   fill(0);
@@ -217,18 +218,18 @@ function Horizon( horizonY ) {
     //   fill(50,50,100);
     //   rect(0, horizonY, width, _attr.darkSlice);
     // }
-    var numMarks = 50;
+    var numMarks = 100/aspect/1.2;
     var markSpacing = height/numMarks;
 
-    for (i=0; i<numMarks; i++){
-      if ( i % 5 === 0 ) {
-        fill(100);
-        rect(0,i*markSpacing,mw/2,2);
-      } else {
-        fill(75);
-        rect(0,i*markSpacing,mw/4,2);
-      }
-    }
+    // for (i=0; i<numMarks; i++){
+    //   if ( i % 5 === 0 ) {
+    //     fill(100);
+    //     rect(0,i*markSpacing,mw/2,2);
+    //   } else {
+    //     fill(75);
+    //     rect(0,i*markSpacing,mw/4,2);
+    //   }
+    // }
     fill(200,50,50);
     rect(0,dm.position.y, mw, 5);
 
