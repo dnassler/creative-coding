@@ -1,5 +1,5 @@
-var max_distance;
 var dm;
+var horizon;
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -9,52 +9,21 @@ function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   noStroke();
 
-  max_distance = dist(0, 0, width, height);
+
+  dotField = new DotField(height);
 
   dm = new DarkMatter();
   dm.moveLoop();
+
+  horizon = new Horizon(height/2);
+
 }
 
 function draw() {
   background(0);
-  var size2;
 
-  for(var i = 0; i <= width; i += 20) {
-    for(var j = 0; j <= height; j += 20) {
-      //var size = dist(mouseX, mouseY, i, j)/2;//abs(mouseX-i)/2;
-      var size = dist(dm.position.x, dm.position.y, i, j)/2;//abs(mouseX-i)/2;
-
-      size = size/max_distance * 30+1;
-      size2 = size/2;
-      //ellipse(i, j, size, size);
-      var c;
-      var outline;
-      outline = false;
-      noStroke();
-      if ( random(100) < 3 ) {
-        c = color(255);
-        fill(c);
-        outline = random(100)<2 ? true : false;
-      } else {
-        c = color(50,random(100,200),random(100,200));
-        fill(c);
-      }
-      rect(i-size2,j-size2,size,size);
-      if ( outline ) {
-        size2 *= 3;
-        size *= 3;
-        push();
-        noFill();
-        stroke(c);
-        strokeWeight(4);
-        rect(i-size2,j-size2,size,size);
-        pop();
-        if ( random(5) < 1 ) {
-          explodingSquares.push( new ExplodingSquare(createVector(i,j), size));
-        }
-      }
-    }
-  }
+  dotField.draw();
+  //horizon.draw();
 
   if ( explodingSquares.length > 0 ) {
     explodingSquares.forEach(function( item ){
@@ -65,6 +34,88 @@ function draw() {
     });
   }
 
+}
+
+function DotField( horizonY ) {
+
+  var dotSpacing = 20;
+  var dotOffsetY = 0;
+  var _timeToResetColors = 0;
+  var _resetColors = true;
+  var maxI = ceil(width/dotSpacing)+1;
+  var maxJ = ceil(height/dotSpacing)+1;
+  var _dotColors = new Array(maxI);
+  for (var i = 0; i < _dotColors.length; i++) {
+    _dotColors[i] = new Array(maxJ);
+  }
+  var _dotOutline = new Array(maxI);
+  for (var i = 0; i < _dotOutline.length; i++) {
+    _dotOutline[i] = new Array(maxJ);
+  }
+
+  var max_distance = dist(0, 0, width, height);
+  if (horizonY === undefined) {
+    horizonY = height;
+  }
+
+  this.draw = function() {
+    var size2;
+    //dotOffsetY += 1;
+    if ( dotOffsetY > dotSpacing ) {
+      dotOffsetY = 0;
+    }
+    if ( millis() > _timeToResetColors ) {
+      _timeToResetColors = millis() + 250;
+      _resetColors = true;
+    }
+    var iCount = 0;
+    var jCount = 0;
+    for(var i = 0; i <= width; i += dotSpacing, iCount++ ) {
+      for(var j = 0; j <= horizonY + dotSpacing; j += dotSpacing, jCount++ ) {
+        //var size = dist(mouseX, mouseY, i, j)/2;//abs(mouseX-i)/2;
+        var size = dist(dm.position.x, dm.position.y, i, j)/2;//abs(mouseX-i)/2;
+
+        size = size/max_distance * dotSpacing*1.5 + 1;
+        size2 = size/2;
+        //ellipse(i, j, size, size);
+        var c;
+        var outline;
+        noStroke();
+        if ( _resetColors ) {
+          _dotOutline[iCount][jCount] = false;
+          outline = false;
+          if ( random(100) < 3 ) {
+            c = color(255);
+            outline = random(100)<2 ? true : false;
+            if ( outline && random(5) < 1 ) {
+              outline = false; // no outline because there will be explosion instead
+              explodingSquares.push( new ExplodingSquare(createVector(i,j), size));
+            }
+            _dotOutline[iCount][jCount] = outline;
+          } else {
+            c = color(50,random(100,200),random(100,200));
+          }
+          _dotColors[iCount][jCount] = c;
+        } else {
+          c = _dotColors[iCount][jCount];
+          outline = _dotOutline[iCount][jCount];
+        }
+        fill(c);
+        rect(i-size2,j-size2-dotOffsetY,size,size);
+        if ( outline ) {
+          size2 *= 3;
+          size *= 3;
+          push();
+          noFill();
+          stroke(c);
+          strokeWeight(4);
+          rect(i-size2,j-size2,size,size);
+          pop();
+        }
+      }
+    }
+    _resetColors = false;
+  };
 }
 
 var explodingSquares = [];
@@ -115,5 +166,49 @@ function DarkMatter() {
   };
 
   this.moveLoop = _moveLoop;
+
+}
+
+function Horizon( horizonY ) {
+  if (horizonY === undefined) {
+    horizonY = height/2;
+  }
+  var _attr = { lightSlice : 0, darkSlice : 0 };
+  var _startLightSlice = millis() + 5000;
+  var _endLightSlice;
+
+  function updateLightSlice() {
+    if (_startLightSlice && millis() > _startLightSlice) {
+      createjs.Tween.get(_attr).to({lightSlice:height-horizonY}, 10000, createjs.Ease.sineIn).call(function() {
+        _endLightSlice = millis() + 10000;
+      });
+      _startLightSlice = 0;
+    }
+    if (_endLightSlice && millis() > _endLightSlice) {
+      createjs.Tween.get(_attr).to({darkSlice:height-horizonY}, 10000, createjs.Ease.sineIn).call(function() {
+        _startLightSlice = millis() + 10000;
+        _attr.lightSlice = 0;
+        _attr.darkSlice = 0;
+      });
+      _endLightSlice = 0;
+    }
+  }
+
+  this.draw = function() {
+    noStroke();
+    fill(50,50,100);
+    rect(0, horizonY, width, height - horizonY);
+    updateLightSlice();
+    if ( _attr.lightSlice > 0 ) {
+      fill(0);
+      rect(0, horizonY, width, _attr.lightSlice);
+    }
+    if ( _attr.darkSlice > 0 ) {
+      fill(50,50,100);
+      rect(0, horizonY, width, _attr.darkSlice);
+    }
+
+  };
+
 
 }
