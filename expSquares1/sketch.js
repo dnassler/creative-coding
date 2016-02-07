@@ -92,10 +92,10 @@ function DotField( horizonY ) {
           if ( random(100) < 3 ) {
             c = color(255);
             outline = random(100)<2 ? true : false;
-            if ( outline && random(5) < 2 ) {
-              outline = false; // no outline because there will be explosion instead
-              explodingSquares.push( new ExplodingSquare(createVector(i,j), size));
-            }
+            // if ( outline && random(5) < 2 ) {
+            //   outline = false; // no outline because there will be explosion instead
+            //   explodingSquares.push( new ExplodingSquare(createVector(i,j), size));
+            // }
             _dotOutline[iCount][jCount] = outline;
           } else {
             c = color(50,random(100,200),random(100,200));
@@ -157,6 +157,7 @@ function DarkMatter() {
     _dv = createVector(random(width),random(height));
     return new Promise(function(resolve, reject) {
       createjs.Tween.get(_v).to({x:_dv.x,y:_dv.y}, random(500,2000), createjs.Ease.cubicInOut).call(function() {
+        explodingSquares.push( new ExplodingSquare(_dv, 10));
         window.setTimeout(function(){
           resolve();
         }, random(2000));
