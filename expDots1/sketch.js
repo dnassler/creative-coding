@@ -74,7 +74,7 @@ function DotField( horizonY ) {
     }
     var iCount = 0;
     var jCount = 0;
-    for(var i = 0; i <= width; i += dotSpacing, iCount++ ) {
+    for(var i = 0; i <= width+dotSpacing; i += dotSpacing, iCount++ ) {
       for(var j = 0; j <= horizonY + dotSpacing; j += dotSpacing, jCount++ ) {
         //var size = dist(mouseX, mouseY, i, j)/2;//abs(mouseX-i)/2;
         var size = dist(dm.position.x, dm.position.y, i, j)/2;//abs(mouseX-i)/2;
