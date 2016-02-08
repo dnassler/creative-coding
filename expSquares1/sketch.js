@@ -18,10 +18,12 @@ function setup() {
   dm = new DarkMatter();
   dm.moveLoop();
 
-  horizon = new Horizon(height- height/10);
 
   ds = new DotSizeControl(dotField);
   ds.moveLoop();
+
+  horizon = new Horizon(height- height/10, ds);
+
 
 }
 
@@ -181,7 +183,7 @@ function DarkMatter() {
     _dv = createVector(random(width),random(height));
     return new Promise(function(resolve, reject) {
       createjs.Tween.get(_v).to({x:_dv.x,y:_dv.y}, random(500,2000), createjs.Ease.cubicInOut).call(function() {
-        explodingSquares.push( new ExplodingSquare(_dv, 10));
+        //explodingSquares.push( new ExplodingSquare(_dv, 10));
         window.setTimeout(function(){
           resolve();
         }, random(2000));
@@ -206,6 +208,8 @@ function DotSizeControl(df) {
   var _dv;
   var _destXOffset;
   this.dotSizeVec = _v;
+  this.dotSizeMaxX = 50;
+  this.dotSizeMinX = 20;
 
   var _move = function(){
     var r = random(20,50);
@@ -234,7 +238,7 @@ function DotSizeControl(df) {
 }
 
 
-function Horizon( horizonY ) {
+function Horizon( horizonY, dotSizeControl ) {
   if (horizonY === undefined) {
     horizonY = height/2;
   }
@@ -292,7 +296,10 @@ function Horizon( horizonY ) {
     //   }
     // }
     fill(200,50,50);
-    rect(0,dm.position.y, mw, 5);
+    var dotSizeScale =
+      (height - mw ) * (dotSizeControl.dotSizeVec.x - dotSizeControl.dotSizeMinX)
+      / (dotSizeControl.dotSizeMaxX - dotSizeControl.dotSizeMinX);
+    rect(0, dotSizeScale, mw, 5);
 
     var numMarks = 100;
     var markSpacing = width/numMarks;
