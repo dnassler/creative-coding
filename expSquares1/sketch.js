@@ -77,7 +77,7 @@ function DotField( horizonY ) {
   this.draw = function() {
     dotSpacingX = _self.dotSize.x;
     dotSpacingY = _self.dotSize.y;
-    var size2;
+    var size2, sizeY2;
     //dotOffsetY += 1;
     if ( dotOffsetY > dotSpacing ) {
       dotOffsetY = 0;
@@ -96,10 +96,12 @@ function DotField( horizonY ) {
       }
       for(var j = 0; j <= horizonY + dotSpacingY; j += dotSpacingY, jCount++ ) {
         //var size = dist(mouseX, mouseY, i, j)/2;//abs(mouseX-i)/2;
-        var size = dist(dm.position.x, dm.position.y, i, j)/2;//abs(mouseX-i)/2;
+        var d = dist(dm.position.x, dm.position.y, i, j)/2;//abs(mouseX-i)/2;
 
-        size = size/max_distance * dotSpacingX*sizeFactor + 1;
+        var size = d/max_distance * dotSpacingX*sizeFactor + 1;
+        var sizeY = d/max_distance * dotSpacingY*sizeFactor + 1;
         size2 = size/2;
+        sizeY2 = sizeY/2;
         //ellipse(i, j, size, size);
         var c;
         var outline;
@@ -129,7 +131,7 @@ function DotField( horizonY ) {
         }
         fill(c);
         //rect(i-size2,j-size2-dotOffsetY,size,size);
-        rect(i-size2,j-size2-dotOffsetY,size,size);
+        rect(i-size2,j-sizeY2-dotOffsetY,size,sizeY);
 
         if ( outline ) {
           size2 *= 3;
