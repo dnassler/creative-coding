@@ -1,4 +1,5 @@
 var dm;
+var ds;
 var horizon;
 var showBottomMarker;
 
@@ -18,6 +19,9 @@ function setup() {
   dm.moveLoop();
 
   horizon = new Horizon(height- height/10);
+
+  ds = new DotSizeControl(dotField);
+  ds.moveLoop();
 
 }
 
@@ -42,13 +46,18 @@ function draw() {
 
 function DotField( horizonY ) {
 
-  var dotSpacing = 100;
+  var _self = this;
+  var dotSpacing = 50;
+  var dotSpacingMin = 5;
+  _self.dotSize = createVector(dotSpacing,dotSpacing);
+  this.xOffset = width/3;
+
   var sizeFactor = 2;
   var dotOffsetY = 0;
   var _timeToResetColors = 0;
   var _resetColors = true;
-  var maxI = ceil(width/dotSpacing)+1;
-  var maxJ = ceil(height/dotSpacing)+1;
+  var maxI = ceil(width/dotSpacingMin)+1;
+  var maxJ = ceil(height/dotSpacingMin)+1;
   var _dotColors = new Array(maxI);
   for (var i = 0; i < _dotColors.length; i++) {
     _dotColors[i] = new Array(maxJ);
@@ -64,6 +73,8 @@ function DotField( horizonY ) {
   }
 
   this.draw = function() {
+    dotSpacingX = _self.dotSize.x;
+    dotSpacingY = _self.dotSize.y;
     var size2;
     //dotOffsetY += 1;
     if ( dotOffsetY > dotSpacing ) {
@@ -75,12 +86,17 @@ function DotField( horizonY ) {
     }
     var iCount = 0;
     var jCount = 0;
-    for(var i = 0; i <= width; i += dotSpacing, iCount++ ) {
-      for(var j = 0; j <= horizonY + dotSpacing; j += dotSpacing, jCount++ ) {
+    var xOffset = this.xOffset;
+    for(var i0 = 0; i0 <= 2*width + dotSpacingX; i0 += dotSpacingX, iCount++ ) {
+      i = i0 + xOffset - dotSpacingX*40
+      if ( i < 0 || i > width + dotSpacingX ) {
+        continue;
+      }
+      for(var j = 0; j <= horizonY + dotSpacingY; j += dotSpacingY, jCount++ ) {
         //var size = dist(mouseX, mouseY, i, j)/2;//abs(mouseX-i)/2;
         var size = dist(dm.position.x, dm.position.y, i, j)/2;//abs(mouseX-i)/2;
 
-        size = size/max_distance * dotSpacing*sizeFactor + 1;
+        size = size/max_distance * dotSpacingX*sizeFactor + 1;
         size2 = size/2;
         //ellipse(i, j, size, size);
         var c;
@@ -104,9 +120,15 @@ function DotField( horizonY ) {
         } else {
           c = _dotColors[iCount][jCount];
           outline = _dotOutline[iCount][jCount];
+          if ( !c ) {
+            c = color(50,random(100,200),random(100,200));
+            _dotColors[iCount][jCount] = c;
+          }
         }
         fill(c);
+        //rect(i-size2,j-size2-dotOffsetY,size,size);
         rect(i-size2,j-size2-dotOffsetY,size,size);
+
         if ( outline ) {
           size2 *= 3;
           size *= 3;
@@ -114,7 +136,9 @@ function DotField( horizonY ) {
           noFill();
           stroke(c);
           strokeWeight(4);
+          //rect(i-size2,j-size2,size,size);
           rect(i-size2,j-size2,size,size);
+
           pop();
         }
       }
@@ -174,6 +198,41 @@ function DarkMatter() {
   this.moveLoop = _moveLoop;
 
 }
+
+function DotSizeControl(df) {
+
+  var _self = this;
+  var _v = df.dotSize;//createVector(50,50);
+  var _dv;
+  var _destXOffset;
+  this.dotSizeVec = _v;
+
+  var _move = function(){
+    var r = random(20,50);
+    var r2 = random(20,50);
+    _dv = createVector(r,r2);
+    _destXOffset = random(width/3,width/2);
+    return new Promise(function(resolve, reject) {
+      var d = random(5000,10000);
+      createjs.Tween.get(df).to({xOffset:_destXOffset}, d, createjs.Ease.cubicInOut);
+      createjs.Tween.get(_v).to({x:_dv.x,y:_dv.y}, d, createjs.Ease.cubicInOut).call(function() {
+        window.setTimeout(function(){
+          resolve();
+        }, random(2000));
+      });
+    });
+  };
+
+  var _moveLoop = function(){
+    _move().then(function(){
+      _moveLoop();
+    });
+  };
+
+  this.moveLoop = _moveLoop;
+
+}
+
 
 function Horizon( horizonY ) {
   if (horizonY === undefined) {
