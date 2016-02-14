@@ -100,7 +100,7 @@ var PositionMgr = function() {
 
 };
 
-var Thing = function() {
+var Thing = function( mgr ) {
   var _self = this;
   var _color;
   var _pos;
@@ -120,7 +120,8 @@ var Thing = function() {
   };
 
   this.update = function() {
-    _offsetHeight = 5*sin((millis()+_pos.row*100+_pos.col*100)/PI/100.0);
+    // _offsetHeight = 5*sin((millis()+_pos.row*100+_pos.col*100)/PI/100.0);
+    _offsetHeight = 5*sin((mgr.clock + _pos.row*100+_pos.col*100)/PI/100.0);
   };
 
   this.draw = function() {
@@ -144,6 +145,13 @@ var ThingMgr = function() {
 
   var _self = this;
   var _thingArr;
+  var _holdFrameCount = 0;
+  this.clock = 0;
+  var _clockHiddenDelta = 0;
+  this.speed = 1;
+  this.mouseControlsSpeed = false;
+  this.paused = false;
+  this.frameJumpFactor = 0;
 
   var _init = function() {
     _thingArr = [];
@@ -151,10 +159,25 @@ var ThingMgr = function() {
   _init();
 
   this.createNewThing = function() {
-    _thingArr.push( new Thing() );
+    _thingArr.push( new Thing( _self ) );
   };
 
   this.update = function() {
+    if ( !this.paused ) {
+      if ( this.frameJumpFactor > 0 ) {
+        _holdFrameCount += 1;
+        _holdFrameCount %= this.frameJumpFactor;
+      }
+      if ( this.mouseControlsSpeed ) {
+        _clockHiddenDelta += 15 * ((mouseX*6)/width - 3);
+      } else {
+        _clockHiddenDelta += 15 * this.speed;//+(random(-5,10));
+      }
+      if ( this.frameJumpFactor === 0 || _holdFrameCount === 0 ) {
+        this.clock += _clockHiddenDelta;
+        _clockHiddenDelta = 0;
+      }
+    }
     _thingArr.forEach( function(thing) {
       thing.update();
     });
@@ -244,9 +267,26 @@ function mouseClicked() {
 }
 
 function keyTyped() {
-  if (key === 'a') {
+  if (key === 'r') {
     pm.reset();
     tm.resetThings();
+  } else if ( key === '=' || key === '+' ) {
+    // faster
+    tm.speed += 0.1;
+  } else if ( key === '-' || key === '_' ) {
+    // slower
+    tm.speed -= 0.1;
+  } else if ( key === 'p' ) {
+    tm.paused = !tm.paused;
+  } else if ( key === 'm' ) {
+    tm.mouseControlsSpeed = !tm.mouseControlsSpeed;
+  } else if ( key === '2') {
+    tm.frameJumpFactor += 5;
+  } else if ( key === '1' ) {
+    tm.frameJumpFactor -= 5;
+    if ( tm.frameJumpFactor < 0 ) {
+      tm.frameJumpFactor = 0;
+    }
   }
   return false; // prevent any default behavior
 }
