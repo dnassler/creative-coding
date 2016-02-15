@@ -36,6 +36,8 @@ function keyTyped() {
     g.changeAlignment( 3 );
   } else if ( key === '4' ) {
     g.changeAlignment( 4 );
+  } else if ( key === '5' ) {
+    g.changeAlignment( 5 );
   } else if ( key === 's' ) {
 
   }
@@ -91,7 +93,7 @@ var Grid = function(numX,numY){
   this.removeShape = _removeShape;
 
   var _changeAlignment = function( newAlignment ){
-    _cellAlignmentMode = newAlignment === undefined ? floor(random(3)) : newAlignment;
+    _cellAlignmentMode = newAlignment === undefined ? floor(random(6)) : newAlignment;
   };
   this.changeAlignment = _changeAlignment;
 
@@ -164,7 +166,7 @@ var Grid = function(numX,numY){
     // if ( size > _cellWidth ) {
     //   size = _cellWidth;
     // }
-    var shapeAlignMode = _cellAlignmentMode;//random(10) < 5;
+    var shapeAlignMode = _cellAlignmentMode < 5 ? _cellAlignmentMode : floor(random(5));//random(10) < 5;
     var _cells = [];
     var a;
     var i = floor(random(numX));
