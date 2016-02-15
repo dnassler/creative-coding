@@ -7,6 +7,7 @@ function windowResized() {
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   noStroke();
+  rectMode(CENTER);
   main = _main();
   main.setup();
 }
@@ -25,6 +26,18 @@ function keyTyped() {
     g.addShape();
   } else if ( key === '-' ) {
     g.removeShape();
+  } else if ( key === '0' ) {
+    g.changeAlignment( 0 );
+  } else if ( key === '1' ) {
+    g.changeAlignment( 1 );
+  } else if ( key === '2' ) {
+    g.changeAlignment( 2 );
+  } else if ( key === '3' ) {
+    g.changeAlignment( 3 );
+  } else if ( key === '4' ) {
+    g.changeAlignment( 4 );
+  } else if ( key === 's' ) {
+
   }
 }
 
@@ -56,6 +69,7 @@ var _main = function(){
 var Grid = function(numX,numY){
   var _gridArr;
   var _cellWidth;
+  var _cellAlignmentMode = 0;
   var _init = function(){
     var i;
     _cellWidth = width/numX;
@@ -75,6 +89,11 @@ var Grid = function(numX,numY){
     return _gridArr.pop();
   };
   this.removeShape = _removeShape;
+
+  var _changeAlignment = function( newAlignment ){
+    _cellAlignmentMode = newAlignment === undefined ? floor(random(3)) : newAlignment;
+  };
+  this.changeAlignment = _changeAlignment;
 
   var _resetPattern = function(numShapes){
     var i, j;
@@ -141,14 +160,18 @@ var Grid = function(numX,numY){
 
     var c = color(random(255),random(255),random(255),200);
     var length = floor(random(1,6));
-    var size = random(_cellWidth/10, _cellWidth);
+    var size = (floor(random(8))+1) * _cellWidth/8;//random(_cellWidth/10, _cellWidth*1.2);
+    // if ( size > _cellWidth ) {
+    //   size = _cellWidth;
+    // }
+    var shapeAlignMode = _cellAlignmentMode;//random(10) < 5;
     var _cells = [];
     var a;
     var i = floor(random(numX));
     var j = floor(random(numY));
     var isHorizontal = random(10)<5 ? true : false;
     for ( a=0; a<length; a++ ) {
-      _cells.push(new GridCell(i,j,c,_cellWidth,size) );
+      _cells.push(new GridCell(i,j,c,_cellWidth,size, shapeAlignMode) );
       if ( isHorizontal ) {
         i += 1;
       } else {
@@ -172,7 +195,8 @@ var Grid = function(numX,numY){
 
   };
 
-  var GridCell = function(i,j,c,w,size) {
+  var GridCell = function(i,j,c,w,size,alignMode) {
+
     var _update = function(){
 
     };
@@ -181,7 +205,23 @@ var Grid = function(numX,numY){
     var _draw = function(){
       noStroke();
       fill( c );
-      rect( i*w+(w-size)/2, j*w+(w-size)/2, size, size );
+      push();
+
+      if ( alignMode === 1 ) {
+        translate(-(w-size)/2,-(w-size)/2);
+      } else if ( alignMode === 2 ) {
+        translate((w-size)/2,-(w-size)/2);
+      } else if ( alignMode === 3 ) {
+        translate((w-size)/2,(w-size)/2);
+      } else if ( alignMode === 4 ) {
+        translate(-(w-size)/2,(w-size)/2);
+      }
+
+      rect( i*w, j*w, size, size );
+
+
+      pop();
+
     };
     this.draw = _draw;
   };
