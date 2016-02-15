@@ -1,4 +1,5 @@
 var main;
+var camera;
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -8,14 +9,19 @@ function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   noStroke();
   rectMode(CENTER);
+
+  camera = new Camera();
   main = _main();
   main.setup();
 }
 
 function draw() {
   background(255);
+  push();
+  camera.update();
   main.update();
   main.draw();
+  pop();
 }
 
 function keyTyped() {
@@ -38,8 +44,16 @@ function keyTyped() {
     g.changeAlignment( 4 );
   } else if ( key === '5' ) {
     g.changeAlignment( 5 );
+  } else if ( key === 'a' ) {
+    camera.startMoving();
   } else if ( key === 's' ) {
-
+    camera.startMoving(1);
+  } else if ( key === 'd' ) {
+    camera.moveToOrigin();
+  } else if ( key === 'f' ) {
+    camera.autoMove();
+  } else if ( key === 'g' ) {
+    camera.stopAutoMove =  true;
   }
 }
 
@@ -67,6 +81,53 @@ var _main = function(){
   };
 
 };
+
+var Camera = function(){
+
+  var _self = this;
+  this.attr = { scale: 1, offsetX: 0, offsetY: 0 };
+  var _destScale;
+  var _destOffsetX, _destOffsetY;
+  this.stopAutoMove = false;
+
+  var _autoMove = function(){
+    _startMoving().then(function(){
+      if ( !_self.stopAutoMove ) {
+        _autoMove();
+      } else {
+        _self.stopAutoMove = false;
+      }
+    });
+  };
+  this.autoMove = _autoMove;
+
+  var _startMoving = function(destScale, destOffsetX, destOffsetY){
+    return new Promise(function(resolve,reject){
+      _destScale = destScale != undefined ? destScale : random(1,4);
+      _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.9,width*0.5/_destScale);
+      _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height*0.9,height*0.5/_destScale);
+      createjs.Tween.get(_self.attr,{override:true}).to({scale:_destScale, offsetX:_destOffsetX, offsetY:_destOffsetY},
+         random(2000,5000), createjs.Ease.cubicInOut).call(function() {
+           resolve();
+      });
+    });
+  };
+  this.startMoving = _startMoving;
+
+  var _moveToOrigin = function(){
+    _startMoving(1,0,0);
+  };
+  this.moveToOrigin = _moveToOrigin;
+
+  this.update = function(){
+    //translate(-width/2,-height/2);
+    scale(_self.attr.scale);
+
+    translate(_self.attr.offsetX, _self.attr.offsetY);
+
+  };
+
+}
 
 var Grid = function(numX,numY){
   var _gridArr;
@@ -102,7 +163,7 @@ var Grid = function(numX,numY){
     var c, size, length;
     _gridArr = [];
 
-    var n = numShapes ? numShapes : random(5,100);
+    var n = numShapes ? numShapes : random(50,200);
     for ( i=0; i<n; i++ ) {
       _gridArr.push( new GridShape() );
     }
