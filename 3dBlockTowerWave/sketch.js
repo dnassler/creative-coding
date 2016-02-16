@@ -1,4 +1,8 @@
 
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
 var b0 = 0;
 function b0Change() {
   b0 = random(0,255);
