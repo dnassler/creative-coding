@@ -102,9 +102,10 @@ var Camera = function(){
   var _autoMove = function(){
     _startMoving().then(function(){
       if ( !_self.stopAutoMove ) {
+        var wait = random(10)<5 ? 0 : random(2000);
         window.setTimeout(function(){
           _autoMove();
-        }, random(5000));
+        }, wait);
       } else {
         _self.stopAutoMove = false;
       }
