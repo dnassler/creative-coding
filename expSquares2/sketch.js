@@ -1,5 +1,6 @@
 var main;
 var camera;
+var stateSnapshot;
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -54,6 +55,14 @@ function keyTyped() {
     camera.autoMove();
   } else if ( key === 'g' ) {
     camera.stopAutoMove =  true;
+  } else if ( key === 'k' ) {
+    stateSnapshot = g.getState();
+    var snapshotJSON = JSON.stringify(stateSnapshot);
+    console.log(snapshotJSON);
+  } else if ( key === 'l' ) {
+    if ( stateSnapshot != undefined ) {
+      g.restoreState( stateSnapshot );
+    }
   }
 }
 
@@ -93,7 +102,9 @@ var Camera = function(){
   var _autoMove = function(){
     _startMoving().then(function(){
       if ( !_self.stopAutoMove ) {
-        _autoMove();
+        window.setTimeout(function(){
+          _autoMove();
+        }, random(5000));
       } else {
         _self.stopAutoMove = false;
       }
@@ -142,6 +153,21 @@ var Grid = function(numX,numY){
     _resetPattern();
   }
   this.init = _init;
+
+  this.getState = function(){
+    var shapeStateArr = [];
+    _gridArr.forEach( function(shape){
+      shapeStateArr.push( shape.getState() );
+    });
+    return {shapeStateArr: shapeStateArr};
+  };
+
+  this.restoreState = function( state ) {
+    _gridArr = [];
+    state.shapeStateArr.forEach(function(shapeState){
+      _gridArr.push( new GridShape(shapeState) );
+    });
+  };
 
   var _addShape = function(){
     return _gridArr.push( new GridShape() );
@@ -219,7 +245,7 @@ var Grid = function(numX,numY){
   };
   this.draw = _draw;
 
-  var GridShape = function(){
+  var GridShape = function(shapeState){
 
     var c = color(random(255),random(255),random(255),200);
     var length = floor(random(1,6));
@@ -233,14 +259,33 @@ var Grid = function(numX,numY){
     var i = floor(random(numX));
     var j = floor(random(numY));
     var isHorizontal = random(10)<5 ? true : false;
+
+    if ( shapeState != undefined ) {
+      c = shapeState.color;
+      length = shapeState.length;
+      size = shapeState.size;
+      shapeAlignMode = shapeState.shapeAlignMode;
+      i = shapeState.i;
+      j = shapeState.j;
+      isHorizontal = shapeState.isHorizontal;
+    }
+
+    var x = i;
+    var y = j;
     for ( a=0; a<length; a++ ) {
-      _cells.push(new GridCell(i,j,c,_cellWidth,size, shapeAlignMode) );
+      _cells.push(new GridCell(x,y,c,_cellWidth,size, shapeAlignMode) );
       if ( isHorizontal ) {
-        i += 1;
+        x += 1;
       } else {
-        j += 1;
+        y += 1;
       }
     }
+
+    this.getState = function(){
+      return {
+        color: c, length: length, size: size, shapeAlignMode: shapeAlignMode, i: i, j: j, isHorizontal: isHorizontal
+      };
+    };
 
     var _update = function(){
       _cells.forEach(function(cell){
