@@ -1,6 +1,9 @@
 var main;
 var camera;
 var stateSnapshot;
+var timeZero;
+var isRecording = false;
+var recordedHistory;
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -11,9 +14,11 @@ function setup() {
   noStroke();
   rectMode(CENTER);
 
+  timeZero = millis();
   camera = new Camera();
   main = _main();
   main.setup();
+  camera.autoMove();
 }
 
 function draw() {
@@ -30,9 +35,15 @@ function keyTyped() {
   if (key === ' ') {
     g.resetPattern();
   } else if ( key === '=' ) {
-    g.addShape();
+    var i;
+    for ( i=0; i<10; i++ ) {
+      g.addShape();
+    }
   } else if ( key === '-' ) {
-    g.removeShape();
+    var i;
+    for ( i=0; i<10; i++ ) {
+      g.removeShape();
+    }
   } else if ( key === '0' ) {
     g.changeAlignment( 0 );
   } else if ( key === '1' ) {
@@ -63,6 +74,26 @@ function keyTyped() {
     if ( stateSnapshot != undefined ) {
       g.restoreState( stateSnapshot );
     }
+  } else if ( key === 'v' ) {
+    g.resetShapesOnly();
+  } else if ( key === 'c' ) {
+    g.resetColorsOnly();
+  } else if ( key === 'r' ) {
+    console.log('*** REC START ***');
+    timeZero = millis();
+    isRecording = true;
+    recordedHistory = [];
+    recordedHistory.push({time:0, grid: g.getState()});
+    recordedHistory.push({time:0, camera:camera.getState()});
+  } else if ( key === 't' ) {
+    console.log('--- REC STOP ---');
+    isRecording = false;
+    var recordedHistoryJSON = JSON.stringify(recordedHistory);
+    console.log(recordedHistoryJSON);
+  } else if ( keyCode === LEFT_ARROW ) {
+    console.log('left arrow');
+  } else if ( keyCode === RIGHT_ARROW ) {
+    console.log('right arrow');
   }
 }
 
@@ -96,13 +127,17 @@ var Camera = function(){
   var _self = this;
   this.attr = { scale: 1, offsetX: 0, offsetY: 0 };
   var _destScale;
-  var _destOffsetX, _destOffsetY;
+  var _destOffsetX, _destOffsetY, _destTransitTime;
+  var _startedMovingAt;
   this.stopAutoMove = false;
 
   var _autoMove = function(){
     _startMoving().then(function(){
       if ( !_self.stopAutoMove ) {
         var wait = random(10)<5 ? 0 : random(2000);
+        if ( isRecording ) {
+          recordedHistory.push({time:millis()-timeZero, wait:wait});
+        }
         window.setTimeout(function(){
           _autoMove();
         }, wait);
@@ -113,13 +148,27 @@ var Camera = function(){
   };
   this.autoMove = _autoMove;
 
+  this.getState = function(){
+    var state;
+    if ( _destScale != undefined ) {
+      state = {startedMovingAt: _startedMovingAt, scale: _destScale, offsetX: _destOffsetX, offsetY: _destOffsetY, transitTime: _destTransitTime};
+    } else {
+      state = {scale: _self.attr.scale, offsetX: _self.attr.offsetX, offsetY: _self.attr.offsetY};
+    }
+  };
+
   var _startMoving = function(destScale, destOffsetX, destOffsetY){
     return new Promise(function(resolve,reject){
-      _destScale = destScale != undefined ? destScale : random(1,4);
+      _startedMovingAt = millis() - timeZero;
+      _destScale = destScale != undefined ? destScale : random(0.5,4);
       _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.9,width*0.5/_destScale);
       _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height*0.9,height*0.5/_destScale);
+      _destTransitTime = random(2000,5000);
+      if ( isRecording ) {
+        recordedHistory.push({time:_startedMovingAt, camera:_self.getState()});
+      }
       createjs.Tween.get(_self.attr,{override:true}).to({scale:_destScale, offsetX:_destOffsetX, offsetY:_destOffsetY},
-         random(2000,5000), createjs.Ease.cubicInOut).call(function() {
+         _destTransitTime, createjs.Ease.cubicInOut).call(function() {
            resolve();
       });
     });
@@ -142,16 +191,41 @@ var Camera = function(){
 }
 
 var Grid = function(numX,numY){
+  var _self = this;
   var _gridArr;
+  var _eventArr;
   var _cellWidth;
   var _cellAlignmentMode = 0;
   var _init = function(){
     var i;
     _cellWidth = width/numX;
-    // for ( i=0; i<numX; i++ ) {
-    //   _grid.push([]);
-    // }
+    _eventArr = [];
     _resetPattern();
+
+    var periodicRemoveShapes = function(){
+      _removeShape( floor(random(10,20)) );
+      _addEvent( random(2000,5000), periodicRemoveShapes );
+    };
+    _addEvent( random(2000,5000), periodicRemoveShapes );
+
+    var periodicAddShapes = function(){
+      _addShape( floor(random(10,20)) );
+      _addEvent( random(2000,5000), periodicAddShapes );
+    };
+    _addEvent( random(2000,5000), periodicAddShapes );
+
+    var periodicChangeColors = function(){
+      _resetColorsOnly();
+      _addEvent( random(20000,40000), periodicChangeColors );
+    };
+    _addEvent( random(20000,40000), periodicChangeColors );
+
+    var periodicResetPattern = function(){
+      _resetPattern();
+      _addEvent( random(45000,60000), periodicResetPattern );
+    };
+    _addEvent( random(45000,60000), periodicResetPattern );
+
   }
   this.init = _init;
 
@@ -170,13 +244,31 @@ var Grid = function(numX,numY){
     });
   };
 
-  var _addShape = function(){
-    return _gridArr.push( new GridShape() );
+  var _addShape = function(numShapes){
+    var i;
+    if ( numShapes === undefined ) {
+      numShapes = 1;
+    }
+    for ( i=0; i<numShapes; i++ ) {
+      _gridArr.push( new GridShape() );
+    }
+    return;
   };
   this.addShape = _addShape;
 
-  var _removeShape = function() {
-    return _gridArr.pop();
+  var _removeShape = function( numShapes ) {
+    if ( _gridArr.length === 0 ) {
+      return;
+    }
+    var i;
+    if ( numShapes === undefined ) {
+      numShapes = 1;
+    }
+    for ( i=0; i<numShapes; i++ ) {
+      var randomIndex = floor(random(_gridArr.length));
+      _gridArr.splice(randomIndex,1);
+    }
+    return;
   };
   this.removeShape = _removeShape;
 
@@ -186,45 +278,80 @@ var Grid = function(numX,numY){
   this.changeAlignment = _changeAlignment;
 
   var _resetPattern = function(numShapes){
+
+    if ( isRecording ) {
+      recordedHistory.push({time:millis()-timeZero, grid:_self.getState()});
+    }
+
     var i, j;
     var c, size, length;
     _gridArr = [];
 
-    var n = numShapes ? numShapes : random(50,200);
+    var n = numShapes ? numShapes : random(200,400);
     for ( i=0; i<n; i++ ) {
       _gridArr.push( new GridShape() );
     }
-    // for ( i=0; i<numX; i++ ) {
-    //   for ( j=0; j<numY; j++ ) {
-    //     if ( !c ) {
-    //       if ( random(10) < 2 ) {
-    //         c = color(random(255),random(255),random(255),200);
-    //         length = floor(random(1,6));
-    //         size = random(_cellWidth/10, _cellWidth);
-    //       }
-    //     }
-    //     if ( c ) {
-    //       try {
-    //         //_grid[i][j] = ;
-    //         _gridArr.push(new GridCell(i,j,c,_cellWidth,size));
-    //
-    //       } catch (e) {
-    //         console.log('error: i='+i+', j='+j);
-    //       }
-    //     }
-    //
-    //     length -= 1;
-    //     if ( length === 0 ) {
-    //       c = undefined;
-    //     }
-    //
-    //   }
-    // }
 
   };
   this.resetPattern = _resetPattern;
 
+  var _resetShapesOnly = function(){
+    _gridArr.forEach( function(shape){
+      shape.resetShapeOnly();
+    });
+  };
+  this.resetShapesOnly = _resetShapesOnly;
+
+  var _resetColorsOnly = function(){
+    _gridArr.forEach( function(shape){
+      shape.resetColorOnly();
+    });
+  };
+  this.resetColorsOnly = _resetColorsOnly;
+
+  var _gridEventId = 0;
+  var _newGridEventId = function() {
+    _gridEventId += 1;
+    return _gridEventId;
+  };
+
+  var GridEvent = function( delay, action ) {
+    this.id = _newGridEventId();
+    this.time = millis() + delay;
+    this.doAction = action;
+  };
+
+  var _addEvent = function( delay, action ) {
+    _eventArr.push( new GridEvent(delay, action) );
+  };
+
+  var _removeEvent = function( event ) {
+    var i = _eventArr.findIndex(function(element){
+      if ( element.id === event.id ) {
+        return true;
+      }
+      return false;
+    });
+    _eventArr.splice(i,1);
+  };
+
+  var _doExpiredEvents = function(){
+    var expiredEvents = [];
+    _eventArr.forEach( function(event) {
+      if ( millis() > event.time ) {
+        event.doAction();
+        expiredEvents.push( event );
+      }
+    });
+    if ( expiredEvents.length > 0 ) {
+      expiredEvents.forEach(function(event){
+        _removeEvent( event );
+      });
+    }
+  };
+
   var _update = function(){
+    _doExpiredEvents();
     _gridArr.forEach( function(shape){
       shape.update();
     });
@@ -235,52 +362,60 @@ var Grid = function(numX,numY){
     _gridArr.forEach( function(shape){
       shape.draw();
     });
-    // for ( j=0; j<numY; j++ ) {
-    //   for ( i=0; i<numX; i++ ) {
-    //     cell = _grid[i][j];
-    //     if ( cell ) {
-    //       cell.draw(i,j);
-    //     }
-    //   }
-    // }
   };
   this.draw = _draw;
 
   var GridShape = function(shapeState){
 
-    var c = color(random(255),random(255),random(255),200);
-    var length = floor(random(1,6));
-    var size = (floor(random(8))+1) * _cellWidth/8;//random(_cellWidth/10, _cellWidth*1.2);
-    // if ( size > _cellWidth ) {
-    //   size = _cellWidth;
-    // }
-    var shapeAlignMode = _cellAlignmentMode < 5 ? _cellAlignmentMode : floor(random(5));//random(10) < 5;
-    var _cells = [];
-    var a;
-    var i = floor(random(numX));
-    var j = floor(random(numY));
-    var isHorizontal = random(10)<5 ? true : false;
+    var _cells;
+    var c, length, size, shapeAlignMode, i, j, isHorizontal;
 
-    if ( shapeState != undefined ) {
-      c = shapeState.color;
-      length = shapeState.length;
-      size = shapeState.size;
-      shapeAlignMode = shapeState.shapeAlignMode;
-      i = shapeState.i;
-      j = shapeState.j;
-      isHorizontal = shapeState.isHorizontal;
-    }
+    var _init = function(colorIn) {
 
-    var x = i;
-    var y = j;
-    for ( a=0; a<length; a++ ) {
-      _cells.push(new GridCell(x,y,c,_cellWidth,size, shapeAlignMode) );
-      if ( isHorizontal ) {
-        x += 1;
-      } else {
-        y += 1;
+      _cells = [];
+      c = (colorIn === undefined) ? color(random(255),random(255),random(255),200) : colorIn;
+      length = floor(random(1,6));
+      size = (floor(random(8))+1) * _cellWidth/8;//random(_cellWidth/10, _cellWidth*1.2);
+      shapeAlignMode = _cellAlignmentMode < 5 ? _cellAlignmentMode : floor(random(5));//random(10) < 5;
+      i = floor(random(-numX/2,numX*1.5));
+      j = floor(random(-numY/2,numY*1.5));
+      isHorizontal = random(10)<5 ? true : false;
+
+      if ( shapeState != undefined ) {
+        c = shapeState.color;
+        length = shapeState.length;
+        size = shapeState.size;
+        shapeAlignMode = shapeState.shapeAlignMode;
+        i = shapeState.i;
+        j = shapeState.j;
+        isHorizontal = shapeState.isHorizontal;
       }
-    }
+
+      var x = i;
+      var y = j;
+      var a;
+      for ( a=0; a<length; a++ ) {
+        _cells.push(new GridCell(x,y,c,_cellWidth,size, shapeAlignMode) );
+        if ( isHorizontal ) {
+          x += 1;
+        } else {
+          y += 1;
+        }
+      }
+
+    };
+    _init();
+
+    this.resetShapeOnly = function() {
+      _init(c); // reuse original color
+    };
+
+    this.resetColorOnly = function() {
+      c = color(random(255),random(255),random(255),200);
+      _cells.forEach(function(cell){
+        cell.setColor( c );
+      });
+    };
 
     this.getState = function(){
       return {
@@ -305,6 +440,10 @@ var Grid = function(numX,numY){
   };
 
   var GridCell = function(i,j,c,w,size,alignMode) {
+
+    this.setColor = function( colorIn ) {
+      c = colorIn;
+    };
 
     var _update = function(){
 
