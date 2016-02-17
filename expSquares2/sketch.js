@@ -171,10 +171,10 @@ var Camera = function(){
   var _startMoving = function(destScale, destOffsetX, destOffsetY){
     return new Promise(function(resolve,reject){
       _startedMovingAt = millis() - timeZero;
-      _destScale = destScale != undefined ? destScale : random(0.5,4);
-      _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width,width*0.5);
-      _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height,height*0.5);
-      _destTransitTime = random(2000,5000);
+      _destScale = destScale != undefined ? destScale : random(0.6,4);
+      _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.5,width*0.5);
+      _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height*0.5,height*0.5);
+      _destTransitTime = random(5000,10000);
       if ( isRecording ) {
         recordedHistory.push({time:_startedMovingAt, camera:_self.getState()});
       }
@@ -298,7 +298,7 @@ var Grid = function(numX,numY){
     var c, size, length;
     _gridArr = [];
 
-    var n = numShapes ? numShapes : random(200,400);
+    var n = numShapes ? numShapes : random(100,400);
     for ( i=0; i<n; i++ ) {
       _gridArr.push( new GridShape() );
     }
@@ -388,8 +388,8 @@ var Grid = function(numX,numY){
       length = floor(random(1,6));
       size = (floor(random(8))+1) * _cellWidth/8;//random(_cellWidth/10, _cellWidth*1.2);
       shapeAlignMode = _cellAlignmentMode < 5 ? _cellAlignmentMode : floor(random(5));//random(10) < 5;
-      i = floor(random(-numX/2,numX*1.5));
-      j = floor(random(-numY/2,numY*1.5));
+      i = floor(random(-numX/2,numX));
+      j = floor(random(-numY/2,numY));
       isHorizontal = random(10)<5 ? true : false;
 
       if ( shapeState != undefined ) {
