@@ -94,6 +94,17 @@ function keyTyped() {
     console.log('left arrow');
   } else if ( keyCode === RIGHT_ARROW ) {
     console.log('right arrow');
+  } else if ( key === 'u' ) {
+    // _destScale = destScale != undefined ? destScale : random(0.5,4);
+    // _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width,width*0.5/_destScale);
+    // _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height,height*0.5/_destScale);
+    camera.startMoving(4,-width,-height);
+  } else if ( key === 'i' ) {
+    camera.startMoving(4,width*0.5,-height);
+  } else if ( key === 'o' ) {
+    camera.startMoving(4,width*0.5,height*0.5);
+  } else if ( key === 'p' ) {
+    camera.startMoving(4,-width,height*0.5);
   }
 }
 
@@ -161,8 +172,8 @@ var Camera = function(){
     return new Promise(function(resolve,reject){
       _startedMovingAt = millis() - timeZero;
       _destScale = destScale != undefined ? destScale : random(0.5,4);
-      _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.9,width*0.5/_destScale);
-      _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height*0.9,height*0.5/_destScale);
+      _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width,width*0.5);
+      _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height,height*0.5);
       _destTransitTime = random(2000,5000);
       if ( isRecording ) {
         recordedHistory.push({time:_startedMovingAt, camera:_self.getState()});
