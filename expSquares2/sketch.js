@@ -5,6 +5,9 @@ var timeZero;
 var isRecording = false;
 var recordedHistory;
 
+var numGridColumns = 20;
+var numGridRows = 20;
+
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
@@ -57,15 +60,16 @@ function keyTyped() {
   } else if ( key === '5' ) {
     g.changeAlignment( 5 );
   } else if ( key === 'a' ) {
-    camera.startMoving();
-  } else if ( key === 's' ) {
-    camera.startMoving(1);
-  } else if ( key === 'd' ) {
-    camera.moveToOrigin();
-  } else if ( key === 'f' ) {
     camera.autoMove();
+  } else if ( key === 's' ) {
+    camera.startMoving(1,0,0);
+  } else if ( key === 'd' ) {
+    camera.startMoving(4,0,0);
+  } else if ( key === 'f' ) {
+    camera.startMoving(1, (numGridColumns-1)*(g.getCellWidth()), (numGridRows-1)*(g.getCellWidth()));
   } else if ( key === 'g' ) {
-    camera.stopAutoMove =  true;
+    camera.startMoving(4, (numGridColumns-1)*(g.getCellWidth())*4, (numGridRows-1)*(g.getCellWidth())*4);
+    //camera.stopAutoMove =  true;
   } else if ( key === 'k' ) {
     stateSnapshot = g.getState();
     var snapshotJSON = JSON.stringify(stateSnapshot);
@@ -113,7 +117,7 @@ var _main = function(){
   var _g;
 
   var _setup = function(){
-    _g = new Grid(16,10);
+    _g = new Grid(numGridColumns, numGridRows);
   };
 
   var _update = function(){
@@ -172,9 +176,57 @@ var Camera = function(){
     return new Promise(function(resolve,reject){
       _startedMovingAt = millis() - timeZero;
       _destScale = destScale != undefined ? destScale : random(0.6,4);
-      _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.5,width*0.5);
-      _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height*0.5,height*0.5);
-      _destTransitTime = random(5000,10000);
+      // _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.5,width/_destScale);
+      // _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height*0.5,height/_destScale);
+      var grid = main.grid();
+      var numCols = grid.getNumColumns();
+      var numRows = grid.getNumRows();
+      var cellWidth = grid.getCellWidth();
+
+      // var moveAcross = false;
+      // var moveVertical = false;
+      // var moveMode = random(10);
+      // if ( moveMode < 4 ) {
+      //   moveAcross = true;
+      // } else if ( moveMode < 8 ) {
+      //   moveVertical = true;
+      // } else {
+      //   moveAcross = true;
+      //   moveVertical = true;
+      // }
+
+      var destRow, destCol;
+      var rShape = grid.pickShape();
+      destRow = rShape.getStartRow();
+      destCol = rShape.getStartCol();
+
+      if ( destOffsetX !== undefined ) {
+        _destOffsetX = destOffsetX;
+      } else {
+        // if ( moveAcross ) {
+        //   _destOffsetX = random(numCols)*cellWidth*_destScale;
+        // }
+        _destOffsetX = destCol * cellWidth * _destScale;
+      }
+
+      if ( destOffsetY !== undefined ) {
+        _destOffsetY = destOffsetY;
+      } else {
+        // if ( moveVertical ) {
+        //   _destOffsetY = random(numRows)*cellWidth*_destScale;
+        // }
+        _destOffsetY = destRow * cellWidth * _destScale;
+      }
+
+      var transitTimeMode = random(10);
+      if ( transitTimeMode < 6 ) {
+        _destTransitTime = random(5000,10000);
+      } else if ( transitTimeMode < 8 ) {
+        _destTransitTime = random(1000,5000);
+      } else {
+        _destTransitTime = 500;
+      }
+
       if ( isRecording ) {
         recordedHistory.push({time:_startedMovingAt, camera:_self.getState()});
       }
@@ -192,10 +244,9 @@ var Camera = function(){
   this.moveToOrigin = _moveToOrigin;
 
   this.update = function(){
-    //translate(-width/2,-height/2);
+    translate(width/2,height/2);
+    translate(-_self.attr.offsetX, -_self.attr.offsetY);
     scale(_self.attr.scale);
-
-    translate(_self.attr.offsetX, _self.attr.offsetY);
 
   };
 
@@ -207,6 +258,17 @@ var Grid = function(numX,numY){
   var _eventArr;
   var _cellWidth;
   var _cellAlignmentMode = 0;
+
+  this.getCellWidth = function(){
+    return _cellWidth;
+  };
+  this.getNumColumns = function() {
+    return numX;
+  }
+  this.getNumRows = function() {
+    return numY;
+  }
+
   var _init = function(){
     var i;
     _cellWidth = width/numX;
@@ -232,6 +294,7 @@ var Grid = function(numX,numY){
     _addEvent( random(20000,40000), periodicChangeColors );
 
     var periodicResetPattern = function(){
+      _changeAlignment();
       _resetPattern();
       _addEvent( random(45000,60000), periodicResetPattern );
     };
@@ -254,6 +317,25 @@ var Grid = function(numX,numY){
       _gridArr.push( new GridShape(shapeState) );
     });
   };
+
+  var _pickShape = function() {
+    var rIndex = floor(random(_gridArr.length));
+    return _gridArr[rIndex];
+  };
+  this.pickShape = _pickShape;
+
+  var _isNearShape = function( col, row ){
+    var newShape = _gridArr.find( function( cell ){
+      var cDiff, rDiff;
+      cDiff = cell.getCol() - col;
+      rDiff = cell.getRow() - row;
+      if ( cDiff < 3 && rDiff < 3 ) {
+        return true;
+      }
+    });
+    return newShape !== undefined;
+  };
+  this.isNearShape = _isNearShape;
 
   var _addShape = function(numShapes){
     var i;
@@ -298,7 +380,7 @@ var Grid = function(numX,numY){
     var c, size, length;
     _gridArr = [];
 
-    var n = numShapes ? numShapes : random(100,400);
+    var n = numShapes ? numShapes : random(100,250);
     for ( i=0; i<n; i++ ) {
       _gridArr.push( new GridShape() );
     }
@@ -379,18 +461,32 @@ var Grid = function(numX,numY){
   var GridShape = function(shapeState){
 
     var _cells;
-    var c, length, size, shapeAlignMode, i, j, isHorizontal;
+    var c, length, size, shapeAlignMode, i, j, isHorizontal, nextCellIncrement;
+    var maxLength;
+
+    this.getStartRow = function(){
+      return j;
+    };
+    this.getStartCol = function(){
+      return i;
+    };
 
     var _init = function(colorIn) {
 
       _cells = [];
+      maxLength = 5;
       c = (colorIn === undefined) ? color(random(255),random(255),random(255),200) : colorIn;
-      length = floor(random(1,6));
+      length = floor(random(1,maxLength+1));
       size = (floor(random(8))+1) * _cellWidth/8;//random(_cellWidth/10, _cellWidth*1.2);
       shapeAlignMode = _cellAlignmentMode < 5 ? _cellAlignmentMode : floor(random(5));//random(10) < 5;
-      i = floor(random(-numX/2,numX));
-      j = floor(random(-numY/2,numY));
+
+      // i = floor(random(-numX/2,numX));
+      // j = floor(random(-numY/2,numY));
+      i = floor(random(0,numX));
+      j = floor(random(0,numY));
+
       isHorizontal = random(10)<5 ? true : false;
+      nextCellIncrement = floor(random(-2,3));
 
       if ( shapeState != undefined ) {
         c = shapeState.color;
@@ -400,6 +496,7 @@ var Grid = function(numX,numY){
         i = shapeState.i;
         j = shapeState.j;
         isHorizontal = shapeState.isHorizontal;
+        nextCellIncrement = shapeState.nextCellIncrement;
       }
 
       var x = i;
@@ -408,9 +505,9 @@ var Grid = function(numX,numY){
       for ( a=0; a<length; a++ ) {
         _cells.push(new GridCell(x,y,c,_cellWidth,size, shapeAlignMode) );
         if ( isHorizontal ) {
-          x += 1;
+          x += nextCellIncrement;
         } else {
-          y += 1;
+          y += nextCellIncrement;
         }
       }
 
@@ -430,7 +527,9 @@ var Grid = function(numX,numY){
 
     this.getState = function(){
       return {
-        color: c, length: length, size: size, shapeAlignMode: shapeAlignMode, i: i, j: j, isHorizontal: isHorizontal
+        color: c, length: length, size: size, shapeAlignMode: shapeAlignMode,
+        i: i, j: j,
+        isHorizontal: isHorizontal, nextCellIncrement: nextCellIncrement
       };
     };
 
