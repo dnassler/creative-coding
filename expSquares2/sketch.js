@@ -172,8 +172,15 @@ var Camera = function(){
     }
   };
 
+  var _nextMoveFastCount = 5;
+  var _numMovesCounter = 0;
+  var _moveFastCount = 0;
   var _startMoving = function(destScale, destOffsetX, destOffsetY){
     return new Promise(function(resolve,reject){
+      _numMovesCounter += 1;
+      if ( _moveFastCount === 0 && _numMovesCounter > _nextMoveFastCount ) {
+        _moveFastCount = 4;
+      }
       _startedMovingAt = millis() - timeZero;
       _destScale = destScale != undefined ? destScale : random(0.6,4);
       // _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.5,width/_destScale);
@@ -218,7 +225,18 @@ var Camera = function(){
         _destOffsetY = destRow * cellWidth * _destScale;
       }
 
-      var transitTimeMode = random(10);
+      var transitTimeMode;
+
+      if ( _moveFastCount > 0 ) {
+        _moveFastCount -= 1;
+        if ( _moveFastCount === 0 ) {
+          _nextMoveFastCount = _numMovesCounter + random(5,10);
+        }
+        transitTimeMode = 10;
+      } else {
+        transitTimeMode = random(10);
+      }
+
       if ( transitTimeMode < 6 ) {
         _destTransitTime = random(5000,10000);
       } else if ( transitTimeMode < 8 ) {
