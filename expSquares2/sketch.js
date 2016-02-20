@@ -276,6 +276,8 @@ var Grid = function(numX,numY){
   var _eventArr;
   var _cellWidth;
   var _cellAlignmentMode = 0;
+  var _blackAndWhite = false;
+  var _blackAndWhiteMode = 0;
 
   this.getCellWidth = function(){
     return _cellWidth;
@@ -317,6 +319,15 @@ var Grid = function(numX,numY){
       _addEvent( random(45000,60000), periodicResetPattern );
     };
     _addEvent( random(45000,60000), periodicResetPattern );
+
+    var periodicChangeColorToBlackAndWhite = function(){
+      _blackAndWhite = !_blackAndWhite;
+      if ( _blackAndWhite ) {
+        _blackAndWhiteMode = (_blackAndWhiteMode + 1)%2;
+      }
+      _addEvent( random(5000), periodicChangeColorToBlackAndWhite );
+    };
+    _addEvent( random(5000), periodicChangeColorToBlackAndWhite );
 
   }
   this.init = _init;
@@ -481,6 +492,7 @@ var Grid = function(numX,numY){
     var _cells;
     var c, length, size, shapeAlignMode, i, j, isHorizontal, nextCellIncrement;
     var maxLength;
+    var colorPaletteMode;
 
     this.getStartRow = function(){
       return j;
@@ -489,11 +501,41 @@ var Grid = function(numX,numY){
       return i;
     };
 
+    var _getNewColor = function( colorPaletteMode ) {
+      var c;
+      c = color(random(255),random(255),random(255),200);
+      // var colorMode = random(10);
+      // if ( colorMode < 5 ) {
+      //   if ( colorPaletteMode < 11 ) {
+      //     c = color(random(255),random(255),random(255),200);
+      //   // c = color(random(100,255),random(50),random(50),200);
+      //   // } else if ( colorPaletteMode < 11 ) {
+      //   //   c = color(random(100,255),random(100,255),random(50),200);
+      //   // } else if ( colorPaletteMode < 6 ) {
+      //   //   c = color(random(100,255),random(10),random(100,255),200);
+      //   // } else if ( colorPaletteMode < 8 ) {
+      //   //   c = color(random(50),random(100,255),random(100,255),200);
+      //   // } else {
+      //   //   c = color(random(50),random(50),random(100,255),200);
+      //   }
+      // } else {
+      //   c = color(random(255),200);
+      // }
+      return c;
+    };
+
     var _init = function(colorIn) {
 
       _cells = [];
       maxLength = 5;
-      c = (colorIn === undefined) ? color(random(255),random(255),random(255),200) : colorIn;
+      colorPaletteMode = random(10);
+      // c = (colorIn === undefined) ? color(random(255),random(255),random(255),200) : colorIn;
+      if ( colorIn !== undefined ) {
+        c = colorIn;
+      } else {
+        c = _getNewColor( colorPaletteMode );
+      }
+
       length = floor(random(1,maxLength+1));
       size = (floor(random(8))+1) * _cellWidth/8;//random(_cellWidth/10, _cellWidth*1.2);
       shapeAlignMode = _cellAlignmentMode < 5 ? _cellAlignmentMode : floor(random(5));//random(10) < 5;
@@ -537,7 +579,8 @@ var Grid = function(numX,numY){
     };
 
     this.resetColorOnly = function() {
-      c = color(random(255),random(255),random(255),200);
+      colorPaletteMode = random(10);
+      c = _getNewColor(colorPaletteMode);
       _cells.forEach(function(cell){
         cell.setColor( c );
       });
@@ -580,7 +623,19 @@ var Grid = function(numX,numY){
 
     var _draw = function(){
       noStroke();
-      fill( c );
+      if ( _blackAndWhite ) {
+        if ( _blackAndWhiteMode === 0 ) {
+          fill( red(c), 200 );
+        } else {
+          if ( red(c) < 120 ) {
+            fill( red(c), 200 );
+          } else {
+            fill( red(c), 0, 0, 200 );
+          }
+        }
+      } else {
+        fill( c );
+      }
       push();
 
       if ( alignMode === 1 ) {
