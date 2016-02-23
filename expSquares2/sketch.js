@@ -64,11 +64,12 @@ function keyTyped() {
   } else if ( key === 's' ) {
     camera.startMoving(1,0,0);
   } else if ( key === 'd' ) {
-    camera.startMoving(4,0,0);
+    camera.startMoving(25,0,0);
   } else if ( key === 'f' ) {
     camera.startMoving(1, (numGridColumns-1)*(g.getCellWidth()), (numGridRows-1)*(g.getCellWidth()));
   } else if ( key === 'g' ) {
-    camera.startMoving(4, (numGridColumns-1)*(g.getCellWidth())*4, (numGridRows-1)*(g.getCellWidth())*4);
+    //camera.startMoving(4, (numGridColumns-1)*(g.getCellWidth())*4, (numGridRows-1)*(g.getCellWidth())*4);
+    camera.startMoving(25, (numGridColumns-1)*(g.getCellWidth())*1, (numGridRows-1)*(g.getCellWidth())*1);
     //camera.stopAutoMove =  true;
   } else if ( key === 'k' ) {
     stateSnapshot = g.getState();
@@ -178,11 +179,17 @@ var Camera = function(){
   var _startMoving = function(destScale, destOffsetX, destOffsetY){
     return new Promise(function(resolve,reject){
       _numMovesCounter += 1;
+      _destScale = destScale != undefined ? destScale : random(0.6,4);
       if ( _moveFastCount === 0 && _numMovesCounter > _nextMoveFastCount ) {
-        _moveFastCount = 4;
+        if ( random(10) < 5 ) {
+          // hijack the move fast counter to scale up the scene tremendously periodically
+          _moveFastCount = 1;
+          _destScale = 30;
+        } else {
+          _moveFastCount = 4;
+        }
       }
       _startedMovingAt = millis() - timeZero;
-      _destScale = destScale != undefined ? destScale : random(0.6,4);
       // _destOffsetX = destOffsetX != undefined ? destOffsetX : random(-width*0.5,width/_destScale);
       // _destOffsetY = destOffsetY != undefined ? destOffsetY : random(-height*0.5,height/_destScale);
       var grid = main.grid();
@@ -213,7 +220,7 @@ var Camera = function(){
         // if ( moveAcross ) {
         //   _destOffsetX = random(numCols)*cellWidth*_destScale;
         // }
-        _destOffsetX = destCol * cellWidth * _destScale;
+        _destOffsetX = destCol * cellWidth;// * _destScale;
       }
 
       if ( destOffsetY !== undefined ) {
@@ -222,7 +229,7 @@ var Camera = function(){
         // if ( moveVertical ) {
         //   _destOffsetY = random(numRows)*cellWidth*_destScale;
         // }
-        _destOffsetY = destRow * cellWidth * _destScale;
+        _destOffsetY = destRow * cellWidth;// * _destScale;
       }
 
       var transitTimeMode;
@@ -232,7 +239,11 @@ var Camera = function(){
         if ( _moveFastCount === 0 ) {
           _nextMoveFastCount = _numMovesCounter + random(5,10);
         }
-        transitTimeMode = 10;
+        if ( _destScale < 25 ) {
+          transitTimeMode = 10;
+        } else {
+          transitTimeMode = random(10);
+        }
       } else {
         transitTimeMode = random(10);
       }
@@ -263,8 +274,8 @@ var Camera = function(){
 
   this.update = function(){
     translate(width/2,height/2);
-    translate(-_self.attr.offsetX, -_self.attr.offsetY);
     scale(_self.attr.scale);
+    translate(-_self.attr.offsetX, -_self.attr.offsetY);
 
   };
 
@@ -472,6 +483,14 @@ var Grid = function(numX,numY){
     }
   };
 
+  var _visibleCellCount = function(){
+    var vc = 0;
+    _gridArr.forEach( function(shape){
+      vc += shape.visibleCount();
+    });
+    return vc;
+  };
+
   var _update = function(){
     _doExpiredEvents();
     _gridArr.forEach( function(shape){
@@ -481,6 +500,12 @@ var Grid = function(numX,numY){
   this.update = _update;
 
   var _draw = function() {
+
+    if ( false ) {
+      var vc = _visibleCellCount();
+      console.log('visible cell count = '+vc);
+    }
+
     _gridArr.forEach( function(shape){
       shape.draw();
     });
@@ -594,6 +619,18 @@ var Grid = function(numX,numY){
       };
     };
 
+    var _visibleCount = function() {
+      var vc = 0;
+      _cells.forEach(function(cell){
+        var info = cell.cellInfo();
+        if ( info.isVisible ) {
+          vc += 1;
+        }
+      });
+      return vc;
+    }
+    this.visibleCount = _visibleCount;
+
     var _update = function(){
       _cells.forEach(function(cell){
         cell.update();
@@ -648,13 +685,78 @@ var Grid = function(numX,numY){
         translate(-(w-size)/2,(w-size)/2);
       }
 
-      rect( i*w, j*w, size, size );
+      translate(i*w, j*w);
 
+      //rect( i*w, j*w, size, size );
+      rect( 0, 0, size, size );
+
+      if ( _cellInfo().isVisible && camera.attr.scale >= 25 ) {
+        // draw stuff within -size/2 to +size/2 in x and y directions
+
+      }
+
+      // if ( camera.attr.scale >= 25 ) {
+      //   if ( _cellInfo().isVisible ) {
+      //     fill(0,100);
+      //     rect( i*w, j*w, size/10, size/10 );
+      //     rect( i*w+ 2*size/10, j*w + 2*size/10, size/10, size/10 );
+      //     rect( i*w- size/2, j*w - size/2, size/10, size/10 );
+      //     rect( i*w+ size/2, j*w - size/2, size/10, size/10 );
+      //     rect( i*w+ size/2, j*w + size/2, size/10, size/10 );
+      //     rect( i*w- size/2, j*w + size/2, size/10, size/10 );
+      //   }
+      // }
 
       pop();
 
     };
     this.draw = _draw;
+
+    var _cellInfo = function(){
+      var x,y;
+      x = i*w;
+      y = j*w;
+      if ( alignMode === 1 ) {
+        //translate(-(w-size)/2,-(w-size)/2);
+        x += -(w-size)/2;
+        y += -(w-size)/2;
+      } else if ( alignMode === 2 ) {
+        //translate((w-size)/2,-(w-size)/2);
+        x += (w-size)/2;
+        y += -(w-size)/2;
+      } else if ( alignMode === 3 ) {
+        // translate((w-size)/2,(w-size)/2);
+        x += (w-size)/2;
+        y += (w-size)/2;
+      } else if ( alignMode === 4 ) {
+        // translate(-(w-size)/2,(w-size)/2);
+        x += -(w-size)/2;
+        y += (w-size)/2;
+      }
+      var xx = -camera.attr.offsetX + x;
+      var yy = -camera.attr.offsetY + y;
+      var s = camera.attr.scale;
+      var isVisible = false;
+      var ss2 = size/2 /s;
+      var ws2 = width/2 /s;
+      var hs2 = height/2 /s;
+      if (
+        ((xx + ss2) > (-ws2) && (xx - ss2) < (ws2))
+        && ((yy + ss2) > -hs2 && (yy - ss2) < (hs2))
+        ) {
+        isVisible = true;
+      }
+
+      // if (
+      //   ((xx + 0) > (-ws2) && (xx - 0) < (ws2))
+      //   && ((yy + 0) > -hs2 && (yy - 0) < (hs2))
+      //   ) {
+      //   isVisible = true;
+      // }
+      return {x:x, y:y, size:size, isVisible:isVisible};
+    }
+    this.cellInfo = _cellInfo;
+
   };
 
   _init();
