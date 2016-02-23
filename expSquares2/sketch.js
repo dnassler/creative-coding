@@ -246,6 +246,9 @@ var Camera = function(){
         }
       } else {
         transitTimeMode = random(10);
+        // if ( camera.attr.scale <=1 && random(10) < 5 ) {
+        //   _destScale = 25;
+        // }
       }
 
       if ( transitTimeMode < 6 ) {
@@ -690,10 +693,10 @@ var Grid = function(numX,numY){
       //rect( i*w, j*w, size, size );
       rect( 0, 0, size, size );
 
-      if ( _cellInfo().isVisible && camera.attr.scale >= 25 ) {
-        // draw stuff within -size/2 to +size/2 in x and y directions
-
-      }
+      // if ( _cellInfo().isVisible && camera.attr.scale >= 25 ) {
+      //   // draw stuff within -size/2 to +size/2 in x and y directions
+      //
+      // }
 
       // if ( camera.attr.scale >= 25 ) {
       //   if ( _cellInfo().isVisible ) {
