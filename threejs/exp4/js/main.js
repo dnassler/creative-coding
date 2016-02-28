@@ -1,5 +1,7 @@
 import 'babel-polyfill';
 import dat from 'dat-gui';
+import TWEEN from 'tween.js';
+
 // import world from './world';
 //
 // document.getElementById('output').innerHTML = `Hello ${world}!`;
@@ -9,6 +11,39 @@ var light, ambLight;
 var controlAttr, gui, stats;
 var ocontrols;
 var ground;
+
+var shapeArr = [];
+function Shape( mesh ) {
+  var shapeSpaceWidth = 300;
+  var shapeSpaceHeight = 500;
+  function _move() {
+    var newPos = mesh.position.clone();
+    if ( Math.random() < 0.5 ) {
+      newPos.x = (Math.random()-0.5) * shapeSpaceWidth;
+    } else {
+      newPos.z = (Math.random()-0.5) * shapeSpaceHeight;
+    }
+
+    var dur = Math.random()*10000+1000;
+    var delayDur = Math.random()*10000;
+    var tween = new TWEEN.Tween( mesh.position )
+      .delay(delayDur)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .to({ x: newPos.x, z: newPos.z }, dur)
+      .onComplete(function(){
+        _move();
+      });
+    var newRotationX = (Math.random()-0.5)*(Math.PI*4);
+    var tweenRotate = new TWEEN.Tween( mesh.rotation )
+      .delay(delayDur)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .to({ y: newRotationX }, dur );
+
+    tween.start();
+    tweenRotate.start();
+  }
+  _move();
+}
 
 function init() {
   scene = new THREE.Scene();
@@ -30,27 +65,31 @@ function init() {
   } );
   ground = new THREE.Mesh( geometry, material );
   //ground.scale.multiplyScalar( 1 );
-  ground.position.set(0,-50,0);
+  ground.position.set(0,-150,0);
   //ground.castShadow = false;
   ground.receiveShadow = true;
   scene.add( ground );
 
   function addShapes(){
-    var geometry = new THREE.CylinderGeometry( 0, 10, 30, 4, 1 );
+    var size = 3;
+    var geometry = new THREE.CylinderGeometry( 0, 10, 30*size, 4, 1 );
     var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
 
-    for ( var i = 0; i < 5; i ++ ) {
+    for ( var i = 0; i < 20; i ++ ) {
 
       var mesh = new THREE.Mesh( geometry, material );
-      mesh.position.x = ( Math.random() - 0.5 ) * 400;
+      mesh.position.x = ( Math.random() - 0.5 ) * 300;
       mesh.position.y = 0;//( Math.random() - 0.5 ) * 1000;
-      mesh.position.z = ( Math.random() - 0.5 ) * 400;
-      mesh.updateMatrix();
-      mesh.matrixAutoUpdate = false;
+      mesh.position.z = ( Math.random() - 0.5 ) * 500;
+      //mesh.updateMatrix();
+      //mesh.matrixAutoUpdate = false;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
       scene.add( mesh );
+
+      shapeArr.push( new Shape(mesh) );
+
 
     }
   }
@@ -59,8 +98,12 @@ function init() {
   light = new THREE.DirectionalLight( 0xffffff, 0.8 );
   light.position.set( 0, 100, 0 );//.normalize();
   scene.add( light );
+  //light.castShadow = true;
+  light.shadowCameraNear = 1;
+  light.shadowCameraFar = 1000;
+  light.shadowMapWidth = 1024;
+  light.shadowMapHeight = 1024;
 
-  light.castShadow = true;
   //light.target = ground;
 
   var light2 = new THREE.DirectionalLight( 0x0000ff, .8 );
@@ -123,6 +166,7 @@ animate();
 function animate() {
   requestAnimationFrame( animate );
   ocontrols.update();
+  TWEEN.update();
   render();
 }
 
