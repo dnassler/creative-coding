@@ -111,7 +111,7 @@ function init() {
   light = new THREE.DirectionalLight( 0xffffff, 1 );
   light.position.set( 0, 100, 0 );//.normalize();
   scene.add( light );
-  light.castShadow = true;
+  //light.castShadow = true;
   light.shadowCameraNear = 1;
   light.shadowCameraFar = 1000;
   light.shadowMapWidth = 1024;
