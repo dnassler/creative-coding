@@ -48,6 +48,9 @@ function Shape( mesh ) {
 }
 
 function init() {
+
+  var initialGroundPosY = -45; // -150
+
   scene = new THREE.Scene();
 
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
@@ -71,7 +74,7 @@ function init() {
   } );
   ground = new THREE.Mesh( geometry, material );
   //ground.scale.multiplyScalar( 1 );
-  ground.position.set(0,-150,0);
+  ground.position.set(0,initialGroundPosY,0);
   ground.castShadow = true;
   ground.receiveShadow = true;
   scene.add( ground );
@@ -198,7 +201,7 @@ function init() {
   scene.add( ambLight );
 
   controlAttr = new function () {
-    this.groundPosY = -150;
+    this.groundPosY = initialGroundPosY;//-150;
     this.changeCameraViewPoint = function() {
       nextCameraPos();
     };
