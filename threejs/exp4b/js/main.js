@@ -159,6 +159,7 @@ function init() {
   light4 = new THREE.PointLight( 0x808080, 0.8, 1000 );
   light4.castShadow = true;
   light4.shadowBias = 0.01;
+  light4.shadowDarkness = 0.5;
   light4.shadowCameraNear = 1;
   light4.shadowCameraFar = 1000;
   light4.shadowMapWidth = 1024;
@@ -263,7 +264,29 @@ function init() {
 
   // ---
   // sky SphereGeometry
-  //
+
+  // create a star field algorithmically
+
+  var getStarsTexture = function() {
+    var canvas = document.createElement('canvas');
+    canvas.width = 3000;
+    canvas.height = 1000;
+
+    var ctx = canvas.getContext('2d');
+    // draw the stars
+    for (let i=0; i<500; i++){
+      ctx.fillStyle = "rgb(255,255,255)";
+      ctx.beginPath();
+      ctx.arc(THREE.Math.randInt(0,canvas.width), THREE.Math.randInt(0,canvas.height), 1, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    var texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }
+
+  // ---
+
   // load a texture, set wrap mode to repeat
   var textureMilkyWay = new THREE.TextureLoader().load( "eso0932a.jpg" );
   // texture.wrapS = THREE.RepeatWrapping;
@@ -272,7 +295,8 @@ function init() {
 
   var geometry = new THREE.SphereGeometry(3000, 60, 40);
   var uniforms = {
-    texture: { type: 't', value: textureMilkyWay }
+    // texture: { type: 't', value: textureMilkyWay }
+    texture: { type: 't', value: getStarsTexture() }
   };
 
   var material = new THREE.ShaderMaterial( {
