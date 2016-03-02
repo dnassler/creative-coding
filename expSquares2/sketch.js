@@ -209,6 +209,7 @@ var Camera = function(){
       //   moveVertical = true;
       // }
 
+      //CAA last digits 044
       var destRow, destCol;
       var rShape = grid.pickShape();
       destRow = rShape.getStartRow();
@@ -652,8 +653,34 @@ var Grid = function(numX,numY){
 
   var GridCell = function(i,j,c,w,size,alignMode) {
 
+    var size2 = size/2;
+
+    var hasTriangle1 = false;
+    var hasTriangle2 = false;
+    var hasTriangle3 = false;
+    var hasTriangle4 = false;
+
+    var hasTriangle = false;
+
+    // if ( random(10) < 1 ) {
+    //   var r = random(8);
+    //   if ( r < 5 ) {
+    //     hasTriangle1 = (random(10)<5);
+    //   } else if ( r < 6 ) {
+    //     hasTriangle2 = (random(10)<5);
+    //   } else if ( r < 7 ) {
+    //     hasTriangle3 = (random(10)<5);
+    //   } else if ( r < 8 ) {
+    //     hasTriangle4 = (random(10)<5);
+    //   }
+    // }
+    // hasTriangle = hasTriangle1 || hasTriangle2 || hasTriangle3 || hasTriangle4;
+
+    var triangleColor = c;
+
     this.setColor = function( colorIn ) {
       c = colorIn;
+      triangleColor = c;
     };
 
     var _update = function(){
@@ -692,6 +719,21 @@ var Grid = function(numX,numY){
 
       //rect( i*w, j*w, size, size );
       rect( 0, 0, size, size );
+
+      if ( hasTriangle ) {
+        if ( hasTriangle1 ) {
+          triangle( -size2, -size2, size2, size2, -size2, size2);
+        }
+        if ( hasTriangle2 ) {
+          triangle( size2,-size2, size2,size2, -size2,size2);
+        }
+        if ( hasTriangle3 ) {
+          triangle( size2,-size2, -size2,size2, -size2,-size2);
+        }
+        if ( hasTriangle4 ) {
+          triangle( size2,size2, -size2,-size2, size2,-size2);
+        }
+      }
 
       // if ( _cellInfo().isVisible && camera.attr.scale >= 25 ) {
       //   // draw stuff within -size/2 to +size/2 in x and y directions
