@@ -186,9 +186,10 @@ var Thing = function() {
     rotateZ(_angleZ);
 
     //box( 30 * _size.w, 10, 30 * _size.w );
+
     texture(tm.getPGImg());
     plane( 30 * _size.w, 30 * _size.w );
-
+    //torus(100,10);
     pop();
 
   };
@@ -323,7 +324,7 @@ var ThingMgr = function() {
     _thingArr.push( new Thing() );
   };
 
-  this.spin
+  //this.spin
 
   this.update = function() {
     _updateThingImage();
