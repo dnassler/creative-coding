@@ -621,7 +621,7 @@ function LightThing( light ) {
   function _moveDown( duration ) {
     _isMoving = true;
     return new Promise(function(resolve, reject) {
-      createjs.Tween.get(light.position).to({y:_minLight1Height}, duration ? duration : random(10000,20000), createjs.Ease.cubicInOut).call(function() {
+      createjs.Tween.get(light.position).to({y:_minLight1Height}, duration ? duration : Math.randInt(10000,20000), createjs.Ease.cubicInOut).call(function() {
         _isMoving = false;
         resolve();
       });
@@ -631,7 +631,7 @@ function LightThing( light ) {
   function _moveUp( duration ) {
     _isMoving = true;
     return new Promise(function(resolve, reject) {
-      createjs.Tween.get(light.position).to({y:_maxHeight}, duration ? duration : random(10000,20000), createjs.Ease.cubicInOut).call(function() {
+      createjs.Tween.get(light.position).to({y:_maxHeight}, duration ? duration : Math.randInt(10000,20000), createjs.Ease.cubicInOut).call(function() {
         _isMoving = false;
         resolve();
       });
