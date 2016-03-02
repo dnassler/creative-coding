@@ -67,8 +67,8 @@ function init() {
 
   var geometry = new THREE.BoxGeometry( 800, 0.15, 800 );
   var material = new THREE.MeshPhongMaterial( {
-    color: 0xffffff,
-    //color: 0xa0adaf,
+    //color: 0xffffff,
+    color: 0xa0adaf,
     shininess: 150,
     specular: 0xffffff,
     shading: THREE.SmoothShading
@@ -81,7 +81,7 @@ function init() {
   scene.add( ground );
 
   function addShapes(){
-    var size = 6;
+    var size = 3;
     var geometry = new THREE.CylinderGeometry( 0, 10, 30*size, 4, 1 );
     var material =  new THREE.MeshPhongMaterial( {
       shininess: 150,
@@ -111,7 +111,7 @@ function init() {
 
   var sphere = new THREE.SphereGeometry( 10, 16, 8 );
 
-  light = new THREE.DirectionalLight( 0xffffff, 1 );
+  light = new THREE.DirectionalLight( 0xffffff, 0.8 );
   light.position.set( 0, 400, 0 );//.normalize();
   scene.add( light );
   // light.castShadow = true;
@@ -121,7 +121,7 @@ function init() {
   // light.shadowMapHeight = 1024;//4096;//2048;//1024;
   light.target = ground;
 
-  var light2 = new THREE.DirectionalLight( 0xffffff, 1 );
+  var light2 = new THREE.DirectionalLight( 0xffffff, 0.8 );
   light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
   light2.position.set( 0, 400, -400 );//.normalize();
   light2.castShadow = true;

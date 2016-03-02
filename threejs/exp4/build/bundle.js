@@ -115,7 +115,6 @@
 	
 	  var geometry = new THREE.BoxGeometry(800, 0.15, 800);
 	  var material = new THREE.MeshPhongMaterial({
-	    //color: 0xffffff,
 	    color: 0xa0adaf,
 	    shininess: 150,
 	    specular: 0xffffff,
@@ -155,43 +154,24 @@
 	  }
 	  addShapes();
 	
-	  var sphere = new THREE.SphereGeometry(10, 16, 8);
-	
-	  light = new THREE.DirectionalLight(0xffffff, 0.8);
-	  light.position.set(0, 400, 0); //.normalize();
+	  light = new THREE.DirectionalLight(0xffffff, 1);
+	  light.position.set(0, 100, 0); //.normalize();
 	  scene.add(light);
-	  // light.castShadow = true;
+	  //light.castShadow = true;
 	  // light.shadowCameraNear = 1;
 	  // light.shadowCameraFar = 1000;
-	  // light.shadowMapWidth = 1024;//4096;//2048;//1024;
-	  // light.shadowMapHeight = 1024;//4096;//2048;//1024;
+	  // light.shadowMapWidth = 1024;
+	  // light.shadowMapHeight = 1024;
 	  light.target = ground;
 	
-	  var light2 = new THREE.DirectionalLight(0xffffff, 0.8);
-	  light2.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light2.position.set(0, 400, -400); //.normalize();
-	  light2.castShadow = true;
-	  // light2.shadowBias = 0.01;
-	  // light2.shadowDarkness = 0.5;
-	  light2.shadowCameraNear = 1;
-	  light2.shadowCameraFar = 1000;
-	  light2.shadowMapWidth = 1024;
-	  light2.shadowMapHeight = 1024;
-	  light2.target = ground;
+	  //var light2 = new THREE.DirectionalLight( 0x0000ff, .8 );
+	  //light2.position.set( 10, 0, 30 );//.normalize();
+	  // light2.castShadow = true;
+	  // light2.shadowCameraNear = 1;
+	  // light2.shadowCameraFar = 1000;
+	  // light2.shadowMapWidth = 1024;
+	  // light2.shadowMapHeight = 1024;
 	  //scene.add( light2 );
-	
-	  var light2b = new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 2);
-	  //light2b.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
-	  light2b.position.set(-400, 100, 0); //.normalize();
-	  // light2b.castShadow = false;
-	  // light2b.shadowBias = 0.01;
-	  // light2b.shadowDarkness = 0.1;
-	  // light2b.shadowCameraNear = 1;
-	  // light2b.shadowCameraFar = 1000;
-	  // light2b.shadowMapWidth = 1024;
-	  // light2b.shadowMapHeight = 1024;
-	  light2b.target = ground;
-	  //scene.add( light2b );
 	
 	  //var light3 = new THREE.DirectionalLight( 0x00ffff, .8 );
 	  //light3.position.set( -50, 0, -100 );//.normalize();
@@ -202,139 +182,67 @@
 	  // light3.shadowMapHeight = 1024;
 	  //scene.add( light3 );
 	
-	  light4 = new THREE.PointLight(0x808080, 0.8, 1000);
+	  light4 = new THREE.PointLight(0x808080, 1, 0);
+	  //light4 = new THREE.SpotLight( 0x808080, 1, 0 );
 	  light4.castShadow = true;
-	  light4.shadowBias = 0.01;
 	  light4.shadowCameraNear = 1;
 	  light4.shadowCameraFar = 1000;
 	  light4.shadowMapWidth = 1024;
 	  light4.shadowMapHeight = 1024;
+	  //light4.distance = 0;
 	  var sphere = new THREE.SphereGeometry(10, 16, 8);
 	  light4.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
 	  light4.position.set(0, 100, 0);
 	  scene.add(light4);
 	  light4.target = ground;
 	
-	  light5 = new THREE.PointLight(0x808080, 0.2, 1000);
-	  light5.castShadow = true;
-	  light5.shadowBias = 0.01;
-	  light5.shadowDarkness = 0.2;
-	  light5.shadowCameraNear = 1;
-	  light5.shadowCameraFar = 1000;
-	  light5.shadowMapWidth = 1024;
-	  light5.shadowMapHeight = 1024;
-	  //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  light5.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light5.position.set(-400, 100, -200);
-	  //scene.add( light5 );
-	  light5.target = ground;
+	  // light5 = new THREE.PointLight( 0x808080, 1, 1000 );
+	  // light5.castShadow = true;
+	  // light5.shadowCameraNear = 1;
+	  // light5.shadowCameraFar = 1000;
+	  // light5.shadowMapWidth = 1024;
+	  // light5.shadowMapHeight = 1024;
+	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
+	  // light5.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+	  // light5.position.set(-200,100,-200);
+	  // //scene.add( light5 );
+	  // light5.target = ground;
 	
-	  var light5b = new THREE.PointLight(0x808080, 0.2, 1000);
-	  light5b.castShadow = true;
-	  light5b.shadowBias = 0.01;
-	  light5b.shadowDarkness = 0.2;
-	  light5b.shadowCameraNear = 1;
-	  light5b.shadowCameraFar = 1000;
-	  light5b.shadowMapWidth = 1024;
-	  light5b.shadowMapHeight = 1024;
-	  //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  light5b.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light5b.position.set(400, 100, -200);
-	  //scene.add( light5b );
-	  light5b.target = ground;
+	  // light6 = new THREE.PointLight( 0x808080, 1, 1000 );
+	  // light6.castShadow = true;
+	  // light6.shadowCameraNear = 1;
+	  // light6.shadowCameraFar = 1000;
+	  // light6.shadowMapWidth = 1024;
+	  // light6.shadowMapHeight = 1024;
+	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
+	  // light6.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+	  // light6.position.set(200,100,-200);
+	  // //scene.add( light6 );
+	  // light6.target = ground;
 	
-	  var light5c = new THREE.PointLight(0x808080, 0.2, 1000);
-	  light5c.castShadow = false;
-	  light5c.shadowBias = 0.01;
-	  light5c.shadowDarkness = 0.5;
-	  light5c.shadowCameraNear = 1;
-	  light5c.shadowCameraFar = 1000;
-	  light5c.shadowMapWidth = 1024;
-	  light5c.shadowMapHeight = 1024;
-	  //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  light5c.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light5c.position.set(400, 200, 200);
-	  //scene.add( light5c );
-	  light5c.target = ground;
+	  // light7 = new THREE.PointLight( 0x808080, 1, 1000 );
+	  // light7.castShadow = true;
+	  // light7.shadowCameraNear = 1;
+	  // light7.shadowCameraFar = 1000;
+	  // light7.shadowMapWidth = 1024;
+	  // light7.shadowMapHeight = 1024;
+	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
+	  // light7.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+	  // light7.position.set(200,100,200);
+	  // //scene.add( light7 );
+	  // light7.target = ground;
 	
-	  var light5d = new THREE.PointLight(0x808080, 0.2, 1000);
-	  light5d.castShadow = true;
-	  light5d.shadowBias = 0.01;
-	  light5d.shadowDarkness = 0.2;
-	  light5d.shadowCameraNear = 1;
-	  light5d.shadowCameraFar = 1000;
-	  light5d.shadowMapWidth = 1024;
-	  light5d.shadowMapHeight = 1024;
-	  //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  light5d.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light5d.position.set(-400, 200, 200);
-	  //scene.add( light5d );
-	  light5d.target = ground;
-	
-	  light6 = new THREE.PointLight(0x808080, 1, 1000);
-	  light6.castShadow = true;
-	  light6.shadowCameraNear = 1;
-	  light6.shadowCameraFar = 1000;
-	  light6.shadowMapWidth = 1024;
-	  light6.shadowMapHeight = 1024;
-	  //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  light6.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light6.position.set(200, 100, -200);
-	  //scene.add( light6 );
-	  light6.target = ground;
-	
-	  light7 = new THREE.PointLight(0x808080, 1, 1000);
-	  light7.castShadow = true;
-	  light7.shadowCameraNear = 1;
-	  light7.shadowCameraFar = 1000;
-	  light7.shadowMapWidth = 1024;
-	  light7.shadowMapHeight = 1024;
-	  //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  light7.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light7.position.set(200, 100, 200);
-	  //scene.add( light7 );
-	  light7.target = ground;
-	
-	  light8 = new THREE.PointLight(0x808080, 1, 1000);
-	  light8.castShadow = true;
-	  light8.shadowCameraNear = 1;
-	  light8.shadowCameraFar = 1000;
-	  light8.shadowMapWidth = 1024;
-	  light8.shadowMapHeight = 1024;
-	  //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  light8.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light8.position.set(-200, 100, 200);
-	  //scene.add( light8 );
-	  light8.target = ground;
-	
-	  // ---
-	  // sky SphereGeometry
-	  //
-	  // load a texture, set wrap mode to repeat
-	  var textureMilkyWay = new THREE.TextureLoader().load("eso0932a.jpg");
-	  // texture.wrapS = THREE.RepeatWrapping;
-	  // texture.wrapT = THREE.RepeatWrapping;
-	  // texture.repeat.set( 4, 4 );
-	
-	  var geometry = new THREE.SphereGeometry(3000, 60, 40);
-	  var uniforms = {
-	    texture: { type: 't', value: textureMilkyWay }
-	  };
-	
-	  var material = new THREE.ShaderMaterial({
-	    uniforms: uniforms,
-	    vertexShader: document.getElementById('sky-vertex').textContent,
-	    fragmentShader: document.getElementById('sky-fragment').textContent
-	  });
-	
-	  var skyBox = new THREE.Mesh(geometry, material);
-	  skyBox.scale.set(-1, 1, 1);
-	  skyBox.eulerOrder = 'XZY';
-	  skyBox.renderDepth = 1000.0;
-	  scene.add(skyBox);
-	
-	  //
-	  // ---
+	  // light8 = new THREE.PointLight( 0x808080, 1, 1000 );
+	  // light8.castShadow = true;
+	  // light8.shadowCameraNear = 1;
+	  // light8.shadowCameraFar = 1000;
+	  // light8.shadowMapWidth = 1024;
+	  // light8.shadowMapHeight = 1024;
+	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
+	  // light8.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+	  // light8.position.set(-200,100,200);
+	  // //scene.add( light8 );
+	  // light8.target = ground;
 	
 	  ambLight = new THREE.AmbientLight(0x202020, .2); // soft white light
 	  scene.add(ambLight);
