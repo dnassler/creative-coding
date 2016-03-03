@@ -69,6 +69,8 @@ function init() {
   var material = new THREE.MeshPhongMaterial( {
     //color: 0xffffff,
     color: 0xa0adaf,
+    //color: 0x5f5f5f,
+    //emissive: 0x5f5f5f,
     shininess: 150,
     specular: 0xffffff,
     shading: THREE.SmoothShading
@@ -111,9 +113,9 @@ function init() {
 
   var sphere = new THREE.SphereGeometry( 10, 16, 8 );
 
-  light = new THREE.DirectionalLight( 0xffffff, 0.8 );
-  light.position.set( 0, 400, 0 );//.normalize();
-  scene.add( light );
+  light = new THREE.DirectionalLight( 0xffffff, 0.5 );
+  light.position.set( 0, 100, 0 );//.normalize();
+  //scene.add( light );
   // light.castShadow = true;
   // light.shadowCameraNear = 1;
   // light.shadowCameraFar = 1000;
@@ -159,7 +161,7 @@ function init() {
   light4 = new THREE.PointLight( 0x808080, 0.8, 1000 );
   light4.castShadow = true;
   light4.shadowBias = 0.01;
-  light4.shadowDarkness = 0.5;
+  //light4.shadowDarkness = 0.5;
   light4.shadowCameraNear = 1;
   light4.shadowCameraFar = 1000;
   light4.shadowMapWidth = 1024;
