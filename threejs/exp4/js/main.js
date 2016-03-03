@@ -64,6 +64,7 @@ function init() {
     this.intensityLight4 = 1;
     this.shadowBiasLight4 = 0.5;
     this.showStarField = true;
+    this.starFieldRotationSpeed = 0;
     this.changeCameraViewPoint = function() {
       nextCameraPos();
     };
@@ -74,6 +75,7 @@ function init() {
   gui.add( controlAttr, 'intensityLight4', 0, 1 ).onChange(function(v){ light4.intensity = v; });
   gui.add( controlAttr, 'shadowBiasLight4', 0, 2 ).onChange(function(v){ light4.shadowBias = v; });
   gui.add( controlAttr, 'showStarField' ).onChange(function(v){ skyBox.visible = !skyBox.visible; });
+  gui.add( controlAttr, 'starFieldRotationSpeed', -10, 10 );
   gui.add( controlAttr, 'changeCameraViewPoint' );
 
   // camera.position.set(-309.1,25.134,-446.843);
@@ -237,6 +239,7 @@ animate();
 
 function animate() {
   requestAnimationFrame( animate );
+  updateObjects();
   ocontrols.update();
   TWEEN.update();
   render();
@@ -251,4 +254,8 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+function updateObjects() {
+  skyBox.rotation.x += 0.001 * controlAttr.starFieldRotationSpeed;
 }
