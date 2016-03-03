@@ -318,7 +318,7 @@ function init() {
   //
   // ---
 
-  ambLight = new THREE.AmbientLight( 0x202020, .2 ); // soft white light
+  ambLight = new THREE.AmbientLight( 0x202020 ); // soft white light
   scene.add( ambLight );
 
   controlAttr = new function () {
