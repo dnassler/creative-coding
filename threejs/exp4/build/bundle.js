@@ -113,6 +113,7 @@
 	    this.intensityLight4 = 1;
 	    this.shadowBiasLight4 = 0.5;
 	    this.showStarField = true;
+	    this.starFieldRotationSpeed = 0;
 	    this.changeCameraViewPoint = function () {
 	      nextCameraPos();
 	    };
@@ -133,6 +134,7 @@
 	  gui.add(controlAttr, 'showStarField').onChange(function (v) {
 	    skyBox.visible = !skyBox.visible;
 	  });
+	  gui.add(controlAttr, 'starFieldRotationSpeed', -10, 10);
 	  gui.add(controlAttr, 'changeCameraViewPoint');
 	
 	  // camera.position.set(-309.1,25.134,-446.843);
@@ -293,6 +295,7 @@
 	
 	function animate() {
 	  requestAnimationFrame(animate);
+	  updateObjects();
 	  ocontrols.update();
 	  _tween2.default.update();
 	  render();
@@ -307,6 +310,10 @@
 	  camera.aspect = window.innerWidth / window.innerHeight;
 	  camera.updateProjectionMatrix();
 	  renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+	
+	function updateObjects() {
+	  skyBox.rotation.x += 0.001 * controlAttr.starFieldRotationSpeed;
 	}
 
 /***/ },
