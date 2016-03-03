@@ -109,11 +109,12 @@
 	
 	  controlAttr = new function () {
 	    this.groundPosY = initialGroundPosY; //-150;
-	    this.intensityLight1 = 0.6;
-	    this.intensityLight4 = 1;
+	    this.intensityLight1 = 0;
+	    this.intensityLight4 = 3.5;
 	    this.shadowBiasLight4 = 0.5;
+	    this.distanceLight4 = 600;
 	    this.showStarField = true;
-	    this.starFieldRotationSpeed = 0;
+	    this.starFieldRotationSpeed = -1;
 	    this.changeCameraViewPoint = function () {
 	      nextCameraPos();
 	    };
@@ -125,11 +126,14 @@
 	  gui.add(controlAttr, 'intensityLight1', 0, 1).onChange(function (v) {
 	    light1.intensity = v;
 	  });
-	  gui.add(controlAttr, 'intensityLight4', 0, 1).onChange(function (v) {
+	  gui.add(controlAttr, 'intensityLight4', 0, 10).onChange(function (v) {
 	    light4.intensity = v;
 	  });
 	  gui.add(controlAttr, 'shadowBiasLight4', 0, 2).onChange(function (v) {
 	    light4.shadowBias = v;
+	  });
+	  gui.add(controlAttr, 'distanceLight4', 0, 1000).onChange(function (v) {
+	    light4.distance = v;
 	  });
 	  gui.add(controlAttr, 'showStarField').onChange(function (v) {
 	    skyBox.visible = !skyBox.visible;
@@ -144,19 +148,68 @@
 	  // var lookAtVec = new THREE.Vector3(0,0,0);
 	  // camera.lookAt(lookAtVec);
 	
+	  // ---
+	  // ground
+	  //
+	
+	  var getGroundTexture = function getGroundTexture(w, h) {
+	    var canvas = document.createElement('canvas');
+	    canvas.width = w;;
+	    canvas.height = h;;
+	
+	    var ctx = canvas.getContext('2d');
+	    ctx.clearRect(0, 0, canvas.width, canvas.height);
+	    // ctx.fillStyle = "#a0adaf";
+	    ctx.fillStyle = "#d0dddf";
+	    ctx.fillRect(0, 0, canvas.width, canvas.height);
+	    // ctx.fillStyle = "rgb(0,0,255)";
+	    // let bw = w/10;
+	    // for (let i=0; i<10; i++){
+	    //   ctx.fillRect(i*bw,i*bw,bw,bw);
+	    // }
+	
+	    var texture = new THREE.Texture(canvas);
+	    texture.needsUpdate = true;
+	    return texture;
+	  };
+	  var groundTexture = getGroundTexture(1024, 1024);
+	  // starTexture.wrapS = THREE.RepeatWrapping;
+	  // starTexture.wrapT = THREE.RepeatWrapping;
+	  // starTexture.repeat.set( 4, 4 );
+	
 	  var geometry = new THREE.BoxGeometry(800, 0.15, 800);
-	  var material = new THREE.MeshPhongMaterial({
+	  var material1 = new THREE.MeshPhongMaterial({
 	    color: 0xa0adaf,
 	    shininess: 150,
 	    specular: 0xffffff,
 	    shading: THREE.SmoothShading
 	  });
-	  ground = new THREE.Mesh(geometry, material);
+	  var material2 = new THREE.MeshPhongMaterial({
+	    shininess: 150,
+	    specular: 0xffffff,
+	    shading: THREE.SmoothShading,
+	    map: groundTexture,
+	    transparent: false,
+	    opacity: 1 //,
+	    //blending: THREE.MultiplyBlending
+	  });
+	  // var material2 = new THREE.MeshBasicMaterial({
+	  //   map: groundTexture,
+	  //   transparent: true,
+	  //   opacity: 0.5//,
+	  //   //blending: THREE.MultiplyBlending
+	  // });
+	  ground = new THREE.Mesh(geometry, material2);
+	  //ground = THREE.SceneUtils.createMultiMaterialObject( geometry, [material2, material1]);
 	  //ground.scale.multiplyScalar( 1 );
 	  ground.position.set(0, initialGroundPosY, 0);
 	  ground.castShadow = true;
 	  ground.receiveShadow = true;
 	  scene.add(ground);
+	
+	  //
+	  // end of ground
+	  // ---
 	
 	  function addShapes() {
 	    var size = 3;
@@ -188,14 +241,14 @@
 	  light1 = new THREE.DirectionalLight(0xffffff, controlAttr.intensityLight1);
 	  light1.position.set(0, 100, 0); //.normalize();
 	  scene.add(light1);
-	  //light.castShadow = true;
-	  // light.shadowCameraNear = 1;
-	  // light.shadowCameraFar = 1000;
-	  // light.shadowMapWidth = 1024;
-	  // light.shadowMapHeight = 1024;
+	  //light1.castShadow = true;
+	  light1.shadowCameraNear = 1;
+	  light1.shadowCameraFar = 1000;
+	  light1.shadowMapWidth = 1024;
+	  light1.shadowMapHeight = 1024;
 	  light1.target = ground;
 	
-	  light4 = new THREE.PointLight(0x808080, controlAttr.intensityLight4, 0);
+	  light4 = new THREE.PointLight(0x808080, controlAttr.intensityLight4, controlAttr.distanceLight4);
 	  light4.castShadow = true;
 	  light4.shadowBias = controlAttr.shadowBiasLight4;
 	  light4.shadowCameraNear = 1;
@@ -214,16 +267,24 @@
 	  // ---
 	  // sky SphereGeometry
 	
-	  // create a star field algorithmically
+	  // load a texture, set wrap mode to repeat
+	  // var textureMilkyWay = new THREE.TextureLoader().load( "eso0932a.jpg" );
+	  // texture.wrapS = THREE.RepeatWrapping;
+	  // texture.wrapT = THREE.RepeatWrapping;
+	  // texture.repeat.set( 4, 4 );
 	
-	  var getStarsTexture = function getStarsTexture() {
+	  var getStarsTexture = function getStarsTexture(w, h, numStars) {
+	    w = w || 4096;
+	    h = h || 1024;
+	    numStars = numStars || 500;
 	    var canvas = document.createElement('canvas');
-	    canvas.width = 4096; //3000;
-	    canvas.height = 1024; //1000;
+	    canvas.width = w; //3000;
+	    canvas.height = h; //1000;
 	
 	    var ctx = canvas.getContext('2d');
+	    ctx.clearRect(0, 0, canvas.width, canvas.height);
 	    // draw the stars
-	    for (var i = 0; i < 500; i++) {
+	    for (var i = 0; i < numStars; i++) {
 	      ctx.fillStyle = "rgb(255,255,255)";
 	      ctx.beginPath();
 	      ctx.arc(THREE.Math.randInt(0, canvas.width), THREE.Math.randInt(0, canvas.height), 1, 0, 2 * Math.PI);
@@ -233,12 +294,6 @@
 	    texture.needsUpdate = true;
 	    return texture;
 	  };
-	
-	  // load a texture, set wrap mode to repeat
-	  // var textureMilkyWay = new THREE.TextureLoader().load( "eso0932a.jpg" );
-	  // texture.wrapS = THREE.RepeatWrapping;
-	  // texture.wrapT = THREE.RepeatWrapping;
-	  // texture.repeat.set( 4, 4 );
 	
 	  var geometry = new THREE.SphereGeometry(3000, 60, 40);
 	  var uniforms = {
