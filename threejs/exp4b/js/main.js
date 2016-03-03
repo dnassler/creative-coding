@@ -290,7 +290,7 @@ function init() {
   // ---
 
   // load a texture, set wrap mode to repeat
-  var textureMilkyWay = new THREE.TextureLoader().load( "eso0932a.jpg" );
+  //var textureMilkyWay = new THREE.TextureLoader().load( "eso0932a.jpg" );
   // texture.wrapS = THREE.RepeatWrapping;
   // texture.wrapT = THREE.RepeatWrapping;
   // texture.repeat.set( 4, 4 );
