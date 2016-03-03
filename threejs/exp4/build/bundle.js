@@ -68,7 +68,8 @@
 	var ocontrols;
 	var ground;
 	
-	var light4, light5, light6, light7, light8;
+	var light1, light4;
+	var skyBox;
 	
 	var shapeArr = [];
 	function Shape(mesh) {
@@ -105,6 +106,34 @@
 	  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	  // var f = 1;
 	  // camera = new THREE.OrthographicCamera( window.innerWidth /( - 16*f), window.innerWidth / (16*f), window.innerHeight / (16*f), window.innerHeight / - (16*f), -200, 1000 );
+	
+	  controlAttr = new function () {
+	    this.groundPosY = initialGroundPosY; //-150;
+	    this.intensityLight1 = 0.6;
+	    this.intensityLight4 = 1;
+	    this.shadowBiasLight4 = 0.5;
+	    this.showStarField = true;
+	    this.changeCameraViewPoint = function () {
+	      nextCameraPos();
+	    };
+	  }();
+	  gui = new _datGui2.default.GUI();
+	  gui.add(controlAttr, 'groundPosY', -500, 100).onChange(function (v) {
+	    ground.position.y = v;
+	  });
+	  gui.add(controlAttr, 'intensityLight1', 0, 1).onChange(function (v) {
+	    light1.intensity = v;
+	  });
+	  gui.add(controlAttr, 'intensityLight4', 0, 1).onChange(function (v) {
+	    light4.intensity = v;
+	  });
+	  gui.add(controlAttr, 'shadowBiasLight4', 0, 2).onChange(function (v) {
+	    light4.shadowBias = v;
+	  });
+	  gui.add(controlAttr, 'showStarField').onChange(function (v) {
+	    skyBox.visible = !skyBox.visible;
+	  });
+	  gui.add(controlAttr, 'changeCameraViewPoint');
 	
 	  // camera.position.set(-309.1,25.134,-446.843);
 	  camera.zoom = 1;
@@ -154,110 +183,80 @@
 	  }
 	  addShapes();
 	
-	  light = new THREE.DirectionalLight(0xffffff, 1);
-	  light.position.set(0, 100, 0); //.normalize();
-	  scene.add(light);
+	  light1 = new THREE.DirectionalLight(0xffffff, controlAttr.intensityLight1);
+	  light1.position.set(0, 100, 0); //.normalize();
+	  scene.add(light1);
 	  //light.castShadow = true;
 	  // light.shadowCameraNear = 1;
 	  // light.shadowCameraFar = 1000;
 	  // light.shadowMapWidth = 1024;
 	  // light.shadowMapHeight = 1024;
-	  light.target = ground;
+	  light1.target = ground;
 	
-	  //var light2 = new THREE.DirectionalLight( 0x0000ff, .8 );
-	  //light2.position.set( 10, 0, 30 );//.normalize();
-	  // light2.castShadow = true;
-	  // light2.shadowCameraNear = 1;
-	  // light2.shadowCameraFar = 1000;
-	  // light2.shadowMapWidth = 1024;
-	  // light2.shadowMapHeight = 1024;
-	  //scene.add( light2 );
-	
-	  //var light3 = new THREE.DirectionalLight( 0x00ffff, .8 );
-	  //light3.position.set( -50, 0, -100 );//.normalize();
-	  // light3.castShadow = true;
-	  // light3.shadowCameraNear = 1;
-	  // light3.shadowCameraFar = 1000;
-	  // light3.shadowMapWidth = 1024;
-	  // light3.shadowMapHeight = 1024;
-	  //scene.add( light3 );
-	
-	  light4 = new THREE.PointLight(0x808080, 1, 0);
-	  //light4 = new THREE.SpotLight( 0x808080, 1, 0 );
+	  light4 = new THREE.PointLight(0x808080, controlAttr.intensityLight4, 0);
 	  light4.castShadow = true;
+	  light4.shadowBias = controlAttr.shadowBiasLight4;
 	  light4.shadowCameraNear = 1;
 	  light4.shadowCameraFar = 1000;
 	  light4.shadowMapWidth = 1024;
 	  light4.shadowMapHeight = 1024;
-	  //light4.distance = 0;
 	  var sphere = new THREE.SphereGeometry(10, 16, 8);
 	  light4.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
 	  light4.position.set(0, 100, 0);
 	  scene.add(light4);
 	  light4.target = ground;
 	
-	  // light5 = new THREE.PointLight( 0x808080, 1, 1000 );
-	  // light5.castShadow = true;
-	  // light5.shadowCameraNear = 1;
-	  // light5.shadowCameraFar = 1000;
-	  // light5.shadowMapWidth = 1024;
-	  // light5.shadowMapHeight = 1024;
-	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  // light5.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
-	  // light5.position.set(-200,100,-200);
-	  // //scene.add( light5 );
-	  // light5.target = ground;
-	
-	  // light6 = new THREE.PointLight( 0x808080, 1, 1000 );
-	  // light6.castShadow = true;
-	  // light6.shadowCameraNear = 1;
-	  // light6.shadowCameraFar = 1000;
-	  // light6.shadowMapWidth = 1024;
-	  // light6.shadowMapHeight = 1024;
-	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  // light6.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
-	  // light6.position.set(200,100,-200);
-	  // //scene.add( light6 );
-	  // light6.target = ground;
-	
-	  // light7 = new THREE.PointLight( 0x808080, 1, 1000 );
-	  // light7.castShadow = true;
-	  // light7.shadowCameraNear = 1;
-	  // light7.shadowCameraFar = 1000;
-	  // light7.shadowMapWidth = 1024;
-	  // light7.shadowMapHeight = 1024;
-	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  // light7.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
-	  // light7.position.set(200,100,200);
-	  // //scene.add( light7 );
-	  // light7.target = ground;
-	
-	  // light8 = new THREE.PointLight( 0x808080, 1, 1000 );
-	  // light8.castShadow = true;
-	  // light8.shadowCameraNear = 1;
-	  // light8.shadowCameraFar = 1000;
-	  // light8.shadowMapWidth = 1024;
-	  // light8.shadowMapHeight = 1024;
-	  // //var sphere = new THREE.SphereGeometry( 10, 16, 8 );
-	  // light8.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
-	  // light8.position.set(-200,100,200);
-	  // //scene.add( light8 );
-	  // light8.target = ground;
-	
 	  ambLight = new THREE.AmbientLight(0x202020); // soft white light
 	  scene.add(ambLight);
 	
-	  controlAttr = new function () {
-	    this.groundPosY = initialGroundPosY; //-150;
-	    this.changeCameraViewPoint = function () {
-	      nextCameraPos();
-	    };
-	  }();
-	  gui = new _datGui2.default.GUI();
-	  gui.add(controlAttr, 'groundPosY', -500, 100).onChange(function (v) {
-	    ground.position.y = v;
+	  // ---
+	  // sky SphereGeometry
+	
+	  // create a star field algorithmically
+	
+	  var getStarsTexture = function getStarsTexture() {
+	    var canvas = document.createElement('canvas');
+	    canvas.width = 4096; //3000;
+	    canvas.height = 1024; //1000;
+	
+	    var ctx = canvas.getContext('2d');
+	    // draw the stars
+	    for (var i = 0; i < 500; i++) {
+	      ctx.fillStyle = "rgb(255,255,255)";
+	      ctx.beginPath();
+	      ctx.arc(THREE.Math.randInt(0, canvas.width), THREE.Math.randInt(0, canvas.height), 1, 0, 2 * Math.PI);
+	      ctx.fill();
+	    }
+	    var texture = new THREE.Texture(canvas);
+	    texture.needsUpdate = true;
+	    return texture;
+	  };
+	
+	  // load a texture, set wrap mode to repeat
+	  // var textureMilkyWay = new THREE.TextureLoader().load( "eso0932a.jpg" );
+	  // texture.wrapS = THREE.RepeatWrapping;
+	  // texture.wrapT = THREE.RepeatWrapping;
+	  // texture.repeat.set( 4, 4 );
+	
+	  var geometry = new THREE.SphereGeometry(3000, 60, 40);
+	  var uniforms = {
+	    // texture: { type: 't', value: textureMilkyWay }
+	    texture: { type: 't', value: getStarsTexture() }
+	  };
+	
+	  var material = new THREE.ShaderMaterial({
+	    uniforms: uniforms,
+	    vertexShader: document.getElementById('sky-vertex').textContent,
+	    fragmentShader: document.getElementById('sky-fragment').textContent
 	  });
-	  gui.add(controlAttr, 'changeCameraViewPoint');
+	
+	  skyBox = new THREE.Mesh(geometry, material);
+	  skyBox.scale.set(-1, 1, 1);
+	  skyBox.eulerOrder = 'XZY';
+	  skyBox.renderDepth = 1000.0;
+	  scene.add(skyBox);
+	
+	  // ---
 	
 	  renderer = new THREE.WebGLRenderer();
 	  renderer.setSize(window.innerWidth, window.innerHeight);
