@@ -68,7 +68,7 @@
 	var ocontrols;
 	var ground;
 	
-	var light4, light5, light6, light7, light8;
+	var light1, light4, light5, light6, light7, light8;
 	
 	var shapeArr = [];
 	function Shape(mesh) {
@@ -99,6 +99,7 @@
 	function init() {
 	
 	  var initialGroundPosY = -45; // -150
+	  var initialShowLight1Intensity = 0.5;
 	
 	  scene = new THREE.Scene();
 	
@@ -117,6 +118,8 @@
 	  var material = new THREE.MeshPhongMaterial({
 	    //color: 0xffffff,
 	    color: 0xa0adaf,
+	    //color: 0x5f5f5f,
+	    //emissive: 0x5f5f5f,
 	    shininess: 150,
 	    specular: 0xffffff,
 	    shading: THREE.SmoothShading
@@ -157,15 +160,16 @@
 	
 	  var sphere = new THREE.SphereGeometry(10, 16, 8);
 	
-	  light = new THREE.DirectionalLight(0xffffff, 0.8);
-	  light.position.set(0, 400, 0); //.normalize();
-	  scene.add(light);
-	  // light.castShadow = true;
-	  // light.shadowCameraNear = 1;
-	  // light.shadowCameraFar = 1000;
-	  // light.shadowMapWidth = 1024;//4096;//2048;//1024;
-	  // light.shadowMapHeight = 1024;//4096;//2048;//1024;
-	  light.target = ground;
+	  light1 = new THREE.DirectionalLight(0xffffff, initialShowLight1Intensity);
+	  light1.position.set(0, 100, 0); //.normalize();
+	  scene.add(light1);
+	  light1.intensity = 0;
+	  // light1.castShadow = true;
+	  // light1.shadowCameraNear = 1;
+	  // light1.shadowCameraFar = 1000;
+	  // light1.shadowMapWidth = 1024;//4096;//2048;//1024;
+	  // light1.shadowMapHeight = 1024;//4096;//2048;//1024;
+	  light1.target = ground;
 	
 	  var light2 = new THREE.DirectionalLight(0xffffff, 0.8);
 	  light2.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
@@ -205,7 +209,7 @@
 	  light4 = new THREE.PointLight(0x808080, 0.8, 1000);
 	  light4.castShadow = true;
 	  light4.shadowBias = 0.01;
-	  light4.shadowDarkness = 0.5;
+	  //light4.shadowDarkness = 0.5;
 	  light4.shadowCameraNear = 1;
 	  light4.shadowCameraFar = 1000;
 	  light4.shadowMapWidth = 1024;
@@ -334,7 +338,7 @@
 	  // ---
 	
 	  // load a texture, set wrap mode to repeat
-	  var textureMilkyWay = new THREE.TextureLoader().load("eso0932a.jpg");
+	  //var textureMilkyWay = new THREE.TextureLoader().load( "eso0932a.jpg" );
 	  // texture.wrapS = THREE.RepeatWrapping;
 	  // texture.wrapT = THREE.RepeatWrapping;
 	  // texture.repeat.set( 4, 4 );
@@ -365,6 +369,7 @@
 	
 	  controlAttr = new function () {
 	    this.groundPosY = initialGroundPosY; //-150;
+	    this.showLight1 = false;
 	    this.changeCameraViewPoint = function () {
 	      nextCameraPos();
 	    };
@@ -372,6 +377,11 @@
 	  gui = new _datGui2.default.GUI();
 	  gui.add(controlAttr, 'groundPosY', -500, 100).onChange(function (v) {
 	    ground.position.y = v;
+	  });
+	  gui.add(controlAttr, 'showLight1').onChange(function (v0) {
+	    //console.log(`BEFORE input v = ${v0}, light1.visible = ${light1.visible}`);
+	    light1.intensity = v0 ? initialShowLight1Intensity : 0;
+	    //console.log(`AFTER  input v = ${v0}, light1.visible = ${light1.visible}`);
 	  });
 	  gui.add(controlAttr, 'changeCameraViewPoint');
 	
