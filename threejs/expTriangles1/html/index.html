@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+
+    <script type="text/javascript" src="three.js"></script>
+    <!-- <script type="text/javascript" src="../libs/TrackballControls.js"></script> -->
+    <script type="text/javascript" src="OrbitControls.js"></script>
+    <script src="stats.min.js"></script>
+
+    <style> body {padding: 0; margin: 0; overflow: hidden} canvas {width: 100%; height: 100%;}</style>
+
+    <title>untitled</title>
+</head>
+<body>
+<script type="application/x-glsl" id="sky-vertex">
+varying vec2 vUV;
+
+void main() {
+  vUV = uv;
+  vec4 pos = vec4(position, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * pos;
+}
+</script>
+
+<script type="application/x-glsl" id="sky-fragment">
+uniform sampler2D texture;
+varying vec2 vUV;
+
+void main() {
+  vec4 sample = texture2D(texture, vUV);
+  gl_FragColor = vec4(sample.xyz, sample.w);
+}
+</script>
+<script src="bundle.js"></script>
+</body>
+</html>
