@@ -1,11 +1,8 @@
-# webpack Babel demo
-
-Demonstrates how to use webpack with Babel.
 
 Installation:
 
 ```
-cd webpack-babel-demo/
+cd exp4/
 npm install
 ```
 
