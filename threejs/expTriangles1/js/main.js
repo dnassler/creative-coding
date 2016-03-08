@@ -5,22 +5,38 @@ import p5 from 'p5';
 
 //--
 //--
-// var sketch = function( p ) {
-//   p.preload = function() {
-//
-//   };
-//   p.setup = function() {
-//     //p.createCanvas(700, 410);
-//     p.noLoop();
-//   };
-//
-//   p.draw = function() {
-//     p.background(0);
-//     p.fill(255);
-//     p.rect(x,y,50,50);
-//   };
-// };
-// var myp5 = new p5(sketch);
+var pg;
+
+var sketch = function( p ) {
+
+  var x = 0, y = 512;
+
+  p.preload = function() {
+
+  };
+
+  p.setup = function() {
+    //p.createCanvas(700, 410);
+    p.noCanvas();
+    pg = p.createGraphics(1024,1024);
+    //p.noLoop();
+    init();
+    animate();
+
+  };
+
+  p.draw = function() {
+    pg.background(160,173,175);
+    //pg.clear();
+    pg.fill(200,0,0);
+    pg.rect(x,y,50,50);
+    x += 10;
+    if ( x > pg.width ) {
+      x = 0;
+    }
+  };
+};
+var myp5 = new p5(sketch);
 //--
 //--
 
@@ -28,7 +44,8 @@ var scene, camera, renderer;
 var light, ambLight;
 var controlAttr, gui, stats;
 var ocontrols;
-var ground;
+var ground, groundTexture;
+var skyBox;
 
 var light1, light4;
 
@@ -127,7 +144,14 @@ function init() {
     texture.needsUpdate = true;
     return texture;
   }
-  var groundTexture = getGroundTexture(1024,1024);
+  var getGroundTexture2 = function() {
+    var c = pg._renderer.canvas;
+    var texture = new THREE.Texture(c);
+    texture.needsUpdate = true;
+    return texture;
+  };
+  groundTexture = getGroundTexture2();
+  // groundTexture = getGroundTexture(1024,1024);
   // starTexture.wrapS = THREE.RepeatWrapping;
   // starTexture.wrapT = THREE.RepeatWrapping;
   // starTexture.repeat.set( 4, 4 );
@@ -144,7 +168,7 @@ function init() {
     specular: 0xffffff,
     shading: THREE.SmoothShading,
     map: groundTexture,
-    transparent: false,
+    transparent: true,
     opacity: 1//,
     //blending: THREE.MultiplyBlending
   });
@@ -276,7 +300,7 @@ function init() {
     fragmentShader: document.getElementById('sky-fragment').textContent
   });
 
-  var skyBox = new THREE.Mesh(geometry, material);
+  skyBox = new THREE.Mesh(geometry, material);
   skyBox.scale.set(-1, 1, 1);
   skyBox.eulerOrder = 'XZY';
   skyBox.renderDepth = 1000.0;
@@ -320,13 +344,15 @@ function init() {
 
 };
 
-init();
-animate();
+// init();
+// animate();
 
 function animate() {
   requestAnimationFrame( animate );
+  updateObjects();
   ocontrols.update();
   TWEEN.update();
+  groundTexture.needsUpdate = true;
   render();
 }
 
@@ -340,3 +366,7 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize( window.innerWidth, window.innerHeight );
 }
+
+function updateObjects() {
+  skyBox.rotation.x += 0.001 * controlAttr.starFieldRotationSpeed;
+};
