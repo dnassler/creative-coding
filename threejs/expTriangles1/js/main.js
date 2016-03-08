@@ -9,7 +9,7 @@ var pg;
 
 var sketch = function( p ) {
 
-  var x = 0, y = 512;
+  var x = 0, y = 0;
 
   p.preload = function() {
 
@@ -19,21 +19,34 @@ var sketch = function( p ) {
     //p.createCanvas(700, 410);
     p.noCanvas();
     pg = p.createGraphics(1024,1024);
-    //p.noLoop();
+    //pg.background(160,173,175);
+    p.noLoop();
+    pg.rectMode(p.CENTER);
     init();
     animate();
 
   };
 
   p.draw = function() {
+    pg.push();
+    pg.translate(pg.width/2, pg.height/2);
     pg.background(160,173,175);
     //pg.clear();
-    pg.fill(200,0,0);
-    pg.rect(x,y,50,50);
-    x += 10;
-    if ( x > pg.width ) {
-      x = 0;
-    }
+    // pg.fill(200,100,0);
+    // pg.noStroke();
+    // pg.rect(x,y,10,pg.height);
+    // x += 10;
+    // if ( x > pg.width/2 ) {
+    //   x = -pg.width/2;
+    // } else if ( x < -pg.width/2 ) {
+    //   x = pg.width/2;
+    // }
+    // if ( y > pg.height/2 ) {
+    //   y = -pg.height/2;
+    // } else if ( y < -pg.height/2 ) {
+    //   y = pg.height/2;
+    // }
+    pg.pop();
   };
 };
 var myp5 = new p5(sketch);
