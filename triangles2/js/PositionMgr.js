@@ -12,8 +12,25 @@ var PositionMgr = function(p, attr) {
 
     attr = attr || {};
 
-    var maxWidth = attr.maxWidth || p.width;
-    var maxHeight = attr.maxHeight || p.height;
+    if ( attr.cellWidth ) {
+      attr.cellHeight = attr.cellWidth;
+    } else if ( attr.cellHeight ) {
+      attr.cellWidth = attr.cellHeight;
+    }
+
+    var maxWidth = attr.maxWidth
+      || (attr.maxWidthFraction ? attr.maxWidthFraction * p.width : undefined)
+      || p.width;
+    if ( attr.cellWidth && maxWidth < attr.cellWidth ) {
+      maxWidth = attr.cellWidth;
+    }
+    var maxHeight = attr.maxHeight
+      || (attr.maxHeightFraction ? attr.maxHeightFraction * p.height : undefined)
+      || p.height;
+    if ( attr.cellHeight && maxHeight < attr.cellHeight ) {
+      maxHeight = attr.cellHeight;
+    }
+
     if ( maxWidth >= maxHeight ) {
       // cellWidth = cellHeight;
       if ( !attr.maxCols && !attr.cellWidth ) {
@@ -21,7 +38,7 @@ var PositionMgr = function(p, attr) {
       } else {
         maxCols = attr.maxCols || p.floor(maxWidth / attr.cellWidth);
       }
-      cellWidth = maxWidth / maxCols;
+      cellWidth = p.floor(maxWidth / maxCols);
       cellHeight = cellWidth;
       maxRows = attr.maxRows || p.floor(maxHeight / cellHeight);
     } else {
@@ -31,9 +48,9 @@ var PositionMgr = function(p, attr) {
       } else {
         maxRows = attr.maxRows || p.floor(maxHeight / attr.cellHeight);
       }
-      cellHeight = maxHeight / maxRows;
+      cellHeight = p.floor(maxHeight / maxRows);
       cellWidth = cellHeight;
-      maxRols = attr.maxCols || p.floor(maxWidth / cellWidth);
+      maxCols = attr.maxCols || p.floor(maxWidth / cellWidth);
     }
 
     cellGutter = attr.cellGutter || 0;

@@ -1,25 +1,41 @@
 import Thing from './Thing';
+import SoundMgr from './SoundMgr';
+import TWEEN from 'tween.js';
 
-var ThingMgr = function(p, cm, pm) {
+var ThingMgr = function() {
 
   var _self = this;
-  var _thingArr;
-  var _holdFrameCount = 0;
-  this.clock = 0;
-  var _clockHiddenDelta = 0;
-  this.speed = 1;
-  this.mouseControlsSpeed = false;
-  this.paused = false;
-  this.frameJumpFactor = 0;
+  var p;
+  var pm;
 
-  var _init = function() {
+  var _thingArr;
+  var _holdFrameCount;
+  this.clock;
+  var _clockHiddenDelta;
+  this.speed;
+  this.mouseControlsSpeed;
+  this.paused;
+  this.frameJumpFactor;
+  var _moveSomethingAt;
+
+  this.init = function(p0, pm0) {
+    p = p || p0;
+    pm = pm || pm0;
     _thingArr = [];
+    _holdFrameCount = 0;
+    this.clock = 0;
+    _clockHiddenDelta = 0;
+    this.speed = 1;
+    this.mouseControlsSpeed = false;
+    this.paused = false;
+    this.frameJumpFactor = 0;
+    _moveSomethingAt = p.millis() + p.random(5000);
+
     pm.clearAllReservedPos();
   };
-  _init();
 
   this.createNewThing = function() {
-    var t = new Thing( p, _self, cm, pm );
+    var t = new Thing( p, pm );
     if ( t.isValid() ) {
       pm.reservePos( t.getGridPoint(), t );
       _thingArr.push( t );
@@ -42,6 +58,13 @@ var ThingMgr = function(p, cm, pm) {
         _clockHiddenDelta = 0;
       }
     }
+    if ( p.millis() > _moveSomethingAt ) {
+      var i = p.floor(p.random(_thingArr.length));
+      var t = _thingArr[i];
+      var delay = p.random(10000);
+      t.move(delay);
+      _moveSomethingAt = p.millis() + p.random(5000);
+    }
     _thingArr.forEach( function(thing) {
       thing.update();
     });
@@ -55,7 +78,8 @@ var ThingMgr = function(p, cm, pm) {
   };
 
   this.resetThings = function(numThings) {
-    _init();
+    TWEEN.removeAll();
+    _self.init();
     numThings = numThings || p.random(10,50);
     var i;
     for ( i=0; i<numThings; i++ ) {
@@ -80,4 +104,4 @@ var ThingMgr = function(p, cm, pm) {
 
 };
 
-export default ThingMgr;
+export default (new ThingMgr());

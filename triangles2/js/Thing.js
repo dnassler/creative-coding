@@ -1,6 +1,9 @@
 import TWEEN from 'tween.js';
+// import 'p5' from 'p5;'
+import SoundMgr from './SoundMgr';
+import {getNewColor} from './ColorMgr';
 
-var Thing = function( p, mgr, cm, pm ) {
+var Thing = function( p, pm ) {
   var _self = this;
   var _color;
   var _pos;
@@ -9,13 +12,15 @@ var Thing = function( p, mgr, cm, pm ) {
   var _isInitialized = false;
   var _attr = {rotationAngle:0};
   var _inTransit = false;
+  var _tweenPos;
+  var _tweenAngle;
 
   var _getAngle = function() {
     return p.floor(p.random(4)) * p.PI/2;
   };
 
   var _init = function() {
-    _color = cm.getNewColor();
+    _color = getNewColor();
     _attr.rotationAngle = _getAngle();
     _pos = pm.getFreePosition();
     if ( _pos ) {
@@ -63,25 +68,29 @@ var Thing = function( p, mgr, cm, pm ) {
     if ( _inTransit ) {
       return; // ignore move request
     }
+    var newPos = pm.getFreePosition();
+    if ( !newPos ) {
+      return; // ignore move
+    }
     var dur = p.floor(p.random(1000,3000));
     var newAngle = _getAngle();
-    var newPos = pm.getFreePosition();
     pm.reservePos( newPos, _self );
     pm.clearReservedPos( _pos );
     _inTransit = true;
-    var tween = new TWEEN.Tween( _pos )
+    _tweenPos = new TWEEN.Tween( _pos )
       .delay(delay)
       .easing(TWEEN.Easing.Cubic.InOut)
       .to({ col: newPos.col, row: newPos.row }, dur)
       .onComplete(function(){
         _inTransit = false;
+        SoundMgr.playBlip1();
       });
-    var tweenRotate = new TWEEN.Tween( _attr )
+    _tweenAngle = new TWEEN.Tween( _attr )
       .delay(delay)
       .easing(TWEEN.Easing.Cubic.InOut)
       .to({ rotationAngle: newAngle }, dur );
-    tween.start();
-    tweenRotate.start();
+    _tweenPos.start();
+    _tweenAngle.start();
   };
 
 };

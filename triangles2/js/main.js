@@ -3,19 +3,25 @@ import dat from 'dat-gui';
 import TWEEN from 'tween.js';
 import Stats from 'stats.js';
 import p5 from 'p5';
+import 'p5/lib/addons/p5.sound.js';
 
-import ColorMgr from './ColorMgr';
+import * as ColorMgr from './ColorMgr';
 import PositionMgr from './PositionMgr';
 import ThingMgr from './ThingMgr';
+import SoundMgr from './SoundMgr';
 
 var sketch = function( p ) {
 
   var controlAttr;
   var stats;
   var cm, pm, tm;
+  var sm;
 
   p.preload = function() {
-
+    SoundMgr.init();
+    // blip1 = new p5.SoundFile('Blip_Select7.wav',function(){
+    //   blip1.setVolume(1);
+    // });
   };
 
   p.setup = function() {
@@ -24,10 +30,18 @@ var sketch = function( p ) {
 
     controlAttr = new function () {
       this.speed = 1;
-      this.numBlocksOnReset = 10;
-      this.blockSize = 10;
+      this.numBlocksOnReset = 42;
+      this.blockSize = 112;
+      this.maxWidthFraction = 1;
+      this.maxHeightFraction = 0.7;
+      this.muteSounds = false;
       this.resetScene = function() {
-        pm.reset({cellWidth:controlAttr.blockSize});
+        var resetPosMgrAttr = {
+          cellWidth:controlAttr.blockSize,
+          maxWidthFraction: controlAttr.maxWidthFraction,
+          maxHeightFraction: controlAttr.maxHeightFraction
+        };
+        pm.reset(resetPosMgrAttr);
         tm.resetThings( controlAttr.numBlocksOnReset );
       };
       this.moveSomeThings = function() {
@@ -43,6 +57,9 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
     gui.add( controlAttr, 'numBlocksOnReset', 1, 200 );
     gui.add( controlAttr, 'blockSize', 10,200 );
+    gui.add( controlAttr, 'maxWidthFraction', 0.01, 1 );
+    gui.add( controlAttr, 'maxHeightFraction', 0.01, 1 );
+    gui.add( controlAttr, 'muteSounds' ).onChange(function(v){ SoundMgr.mute(v); });
     gui.add( controlAttr, 'resetScene' );
     gui.add( controlAttr, 'moveSomeThings' );
     gui.add( controlAttr, 'saveColors' );
@@ -57,9 +74,16 @@ var sketch = function( p ) {
       p.resizeCanvas(p.windowWidth, p.windowHeight);
     };
 
-    cm = new ColorMgr(p);
-    pm = new PositionMgr(p, {cellWidth:controlAttr.blockSize});
-    tm = new ThingMgr(p,cm,pm);
+    ColorMgr.init(p);
+    cm = ColorMgr;
+    var initialPosMgrAttr = {
+      cellWidth:controlAttr.blockSize,
+      maxWidthFraction: controlAttr.maxWidthFraction,
+      maxHeightFraction: controlAttr.maxHeightFraction
+    };
+    pm = new PositionMgr(p, initialPosMgrAttr);
+    ThingMgr.init(p,pm);
+    tm = ThingMgr;
     tm.resetThings( controlAttr.numBlocksOnReset );
 
   };
@@ -83,3 +107,5 @@ var sketch = function( p ) {
 
 };
 var myp5 = new p5(sketch);
+
+export { myp5 };
