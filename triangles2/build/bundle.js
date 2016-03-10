@@ -98,6 +98,14 @@
 	        pm.reset({ cellWidth: controlAttr.blockSize });
 	        tm.resetThings(controlAttr.numBlocksOnReset);
 	      };
+	      this.moveSomeThings = function () {
+	        tm.moveSomeThings();
+	      };
+	      this.saveColors = function () {
+	        var colorArr = tm.getColors();
+	        var json = JSON.stringify(colorArr);
+	        console.log(json);
+	      };
 	    }();
 	    var gui = new _datGui2.default.GUI();
 	    gui.add(controlAttr, 'speed', 0.001, 1).onChange(function (v) {
@@ -106,6 +114,8 @@
 	    gui.add(controlAttr, 'numBlocksOnReset', 1, 200);
 	    gui.add(controlAttr, 'blockSize', 10, 200);
 	    gui.add(controlAttr, 'resetScene');
+	    gui.add(controlAttr, 'moveSomeThings');
+	    gui.add(controlAttr, 'saveColors');
 	
 	    stats = new _stats2.default();
 	    stats.domElement.style.position = 'absolute';
@@ -125,6 +135,7 @@
 	
 	  p.draw = function () {
 	    p.background(255);
+	    _tween2.default.update();
 	    tm.update();
 	    tm.draw();
 	    // p.background(0);
@@ -43012,7 +43023,8 @@
 	
 	  this.getNewColor = function (colorIndex) {
 	    _colorIndex = colorIndex !== undefined ? colorIndex : p.random(0, 1);
-	    _lastColor = p.color(p.random(255), p.random(255), p.random(255)); //p.lerpColor(_fromColor,_toColor,_colorIndex);
+	    // _lastColor = p.color(p.random(255),p.random(255),p.random(255));//p.lerpColor(_fromColor,_toColor,_colorIndex);
+	    _lastColor = p.color(p.random(220)); //p.lerpColor(_fromColor,_toColor,_colorIndex);
 	    return _lastColor;
 	  };
 	};
@@ -43096,7 +43108,11 @@
 	    _gridRows[pos.row][pos.col] = thing;
 	  };
 	
-	  this.clearReservedPos = function () {
+	  this.clearReservedPos = function (pos) {
+	    _gridRows[pos.row][pos.col] = undefined;
+	  };
+	
+	  this.clearAllReservedPos = function () {
 	    var i;
 	    for (i = 0; i < maxRows; i++) {
 	      _gridRows.push([]);
@@ -43186,7 +43202,7 @@
 	
 	  var _init = function _init() {
 	    _thingArr = [];
-	    pm.clearReservedPos();
+	    pm.clearAllReservedPos();
 	  };
 	  _init();
 	
@@ -43234,19 +43250,41 @@
 	      _self.createNewThing();
 	    }
 	  };
+	
+	  this.getColors = function () {
+	    var colorArr = _thingArr.map(function (thing) {
+	      return thing.getColor();
+	    });
+	    return colorArr;
+	  };
+	
+	  this.moveSomeThings = function () {
+	    var numThings = p.floor(p.random(1, _thingArr.length));
+	    _thingArr.forEach(function (thing) {
+	      var delay = p.random(10000);
+	      thing.move(delay);
+	    });
+	  };
 	};
 	
 	exports.default = ThingMgr;
 
 /***/ },
 /* 295 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	
+	var _tween = __webpack_require__(289);
+	
+	var _tween2 = _interopRequireDefault(_tween);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
 	var Thing = function Thing(p, mgr, cm, pm) {
 	  var _self = this;
 	  var _color;
@@ -43254,10 +43292,16 @@
 	  var _offsetHeight;
 	  var _rotationAngle;
 	  var _isInitialized = false;
+	  var _attr = { rotationAngle: 0 };
+	  var _inTransit = false;
+	
+	  var _getAngle = function _getAngle() {
+	    return p.floor(p.random(4)) * p.PI / 2;
+	  };
 	
 	  var _init = function _init() {
 	    _color = cm.getNewColor();
-	    _rotationAngle = p.floor(p.random(4)) * p.PI / 2;
+	    _attr.rotationAngle = _getAngle();
 	    _pos = pm.getFreePosition();
 	    if (_pos) {
 	      _isInitialized = true;
@@ -43267,6 +43311,10 @@
 	
 	  this.isValid = function () {
 	    return _isInitialized;
+	  };
+	
+	  this.getColor = function () {
+	    return _color;
 	  };
 	
 	  this.getGridPoint = function () {
@@ -43286,11 +43334,29 @@
 	    //p.rect( 0,0, pm.cellWidth, pm.cellHeight);
 	    p.translate(pm.cellWidth / 2, pm.cellWidth / 2);
 	    //p.rotate(_offsetHeight);
-	    p.rotate(_rotationAngle);
+	    p.rotate(_attr.rotationAngle);
 	
 	    p.triangle(-pm.cellWidth / 2, -pm.cellWidth / 2, pm.cellWidth / 2, pm.cellWidth / 2, -pm.cellWidth / 2, pm.cellWidth / 2);
 	
 	    p.pop();
+	  };
+	
+	  this.move = function (delay) {
+	    if (_inTransit) {
+	      return; // ignore move request
+	    }
+	    var dur = p.floor(p.random(1000, 3000));
+	    var newAngle = _getAngle();
+	    var newPos = pm.getFreePosition();
+	    pm.reservePos(newPos, _self);
+	    pm.clearReservedPos(_pos);
+	    _inTransit = true;
+	    var tween = new _tween2.default.Tween(_pos).delay(delay).easing(_tween2.default.Easing.Cubic.InOut).to({ col: newPos.col, row: newPos.row }, dur).onComplete(function () {
+	      _inTransit = false;
+	    });
+	    var tweenRotate = new _tween2.default.Tween(_attr).delay(delay).easing(_tween2.default.Easing.Cubic.InOut).to({ rotationAngle: newAngle }, dur);
+	    tween.start();
+	    tweenRotate.start();
 	  };
 	};
 	
