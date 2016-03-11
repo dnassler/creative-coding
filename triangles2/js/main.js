@@ -28,12 +28,15 @@ var sketch = function( p ) {
     p.createCanvas(p.windowWidth, p.windowHeight);
     //p.noLoop();
 
+    ColorMgr.init(p);
+
     controlAttr = new function () {
       this.speed = 1;
       this.numBlocksOnReset = 42;
       this.blockSize = 112;
       this.maxWidthFraction = 1;
       this.maxHeightFraction = 0.7;
+      this.colorMode = ColorMgr.colorMode.BLACK_AND_WHITE;
       this.muteSounds = false;
       this.resetScene = function() {
         var resetPosMgrAttr = {
@@ -59,6 +62,7 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'blockSize', 10,200 );
     gui.add( controlAttr, 'maxWidthFraction', 0.01, 1 );
     gui.add( controlAttr, 'maxHeightFraction', 0.01, 1 );
+    gui.add( controlAttr, 'colorMode', Object.keys(ColorMgr.colorMode) ).onChange(function(v){ ColorMgr.setColorMode(ColorMgr.colorMode[v])});
     gui.add( controlAttr, 'muteSounds' ).onChange(function(v){ SoundMgr.mute(v); });
     gui.add( controlAttr, 'resetScene' );
     gui.add( controlAttr, 'moveSomeThings' );
@@ -74,7 +78,6 @@ var sketch = function( p ) {
       p.resizeCanvas(p.windowWidth, p.windowHeight);
     };
 
-    ColorMgr.init(p);
     cm = ColorMgr;
     var initialPosMgrAttr = {
       cellWidth:controlAttr.blockSize,

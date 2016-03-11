@@ -1,5 +1,6 @@
 import Thing from './Thing';
 import SoundMgr from './SoundMgr';
+// import * as ColorMgr from './ColorMgr';
 import TWEEN from 'tween.js';
 
 var ThingMgr = function() {
