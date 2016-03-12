@@ -9,6 +9,12 @@ var _mode;
 var colorMode = { BLACK_AND_WHITE: 1, SOME_RED: 2 };
 var _currentColorMode;
 
+var _colorArr;
+
+var reset = function() {
+  _colorArr = [];
+};
+
 var setColorMode = function( mode ) {
   _currentColorMode = mode;
 };
@@ -16,6 +22,7 @@ var setColorMode = function( mode ) {
 var init = function( pIn ) {
   p = pIn;
 
+  _colorArr = [];
   _currentColorMode = colorMode.BLACK_AND_WHITE;
   _colorIndex = 0;
   _fromColor = p.color(50,100,250);
@@ -31,18 +38,26 @@ var getNewColor = function() {
   var newColor;
   if ( _currentColorMode && _currentColorMode === colorMode.SOME_RED ) {
     if ( p.random(10) < 1 ) {
-      newColor = p.color(p.random(255),0,0);
+      newColor = p.color(p.random(220),0,0);
     } else {
       newColor = p.color(p.random(220));
     }
   } else {
     newColor = p.color(p.random(220));
   }
+  _colorArr.push( newColor );
   _lastColor = newColor;//p.lerpColor(_fromColor,_toColor,_colorIndex);
   return _lastColor;
 };
 
-export { init, getNewColor, colorMode, setColorMode };
+var getAllColorsSinceLastReset = function() {
+  var colorInfoArr = _colorArr.map(function(c){
+    return {r: p.red(c), g:p.green(c), b:p.blue(c), alpha:p.alpha(c)};
+  });
+  return colorInfoArr;
+};
+
+export { init, reset, getNewColor, colorMode, setColorMode, getAllColorsSinceLastReset };
 
 // var ColorMgr = function() {
 //

@@ -3,6 +3,7 @@ var PositionMgr = function(p, attr) {
 
   var _self = this;
 
+  var _numReserved;
   var _gridRows;
   var maxRows, maxCols;
   var cellWidth, cellHeight;
@@ -65,6 +66,8 @@ var PositionMgr = function(p, attr) {
     for ( i=0; i<maxRows; i++ ) {
       _gridRows.push( [] );
     }
+
+    _numReserved = 0;
   };
   _init();
 
@@ -81,10 +84,12 @@ var PositionMgr = function(p, attr) {
   this.reservePos = function( pos, thing ) {
     //var pos = thing.getGridPoint();
     _gridRows[pos.row][pos.col] = thing;
+    _numReserved += 1;
   };
 
   this.clearReservedPos = function( pos ) {
     _gridRows[pos.row][pos.col] = undefined;
+    _numReserved -= 1;
   }
 
   this.clearAllReservedPos = function() {
@@ -97,6 +102,10 @@ var PositionMgr = function(p, attr) {
   this.reset = function(attrReset) {
     attr = attrReset;
     _init();
+  };
+
+  this.isAnyPositionFree = function() {
+    return ((maxCols * maxRows) > _numReserved);
   };
 
   // accepts input col and row as a starting point
@@ -127,6 +136,10 @@ var PositionMgr = function(p, attr) {
       if ( !gridElement ) {
         var pos = {row:rowIndex, col:colIndex};
         return pos;
+      // } else if ( gridElement.isWaitingBeforeMoveStart() ) {
+      //   var freeAngleAtPos = gridElement.getStationaryAngle() + p.PI;
+      //   var pos = {row:rowIndex, col:colIndex, freeAngleAtPos: freeAngleAtPos};
+      //   return pos;
       }
       if ( limitToColumn ) {
         // check next row since input specified column

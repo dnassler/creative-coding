@@ -51,13 +51,13 @@ var sketch = function( p ) {
         tm.moveSomeThings();
       };
       this.saveColors = function() {
-        var colorArr = tm.getColors();
+        var colorArr = ColorMgr.getAllColorsSinceLastReset();
         var json = JSON.stringify(colorArr);
         console.log( json );
       };
     };
     var gui = new dat.GUI();
-    gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
+    //gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
     gui.add( controlAttr, 'numBlocksOnReset', 1, 200 );
     gui.add( controlAttr, 'blockSize', 10,200 );
     gui.add( controlAttr, 'maxWidthFraction', 0.01, 1 );

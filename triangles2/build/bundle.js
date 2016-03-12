@@ -132,15 +132,13 @@
 	        tm.moveSomeThings();
 	      };
 	      this.saveColors = function () {
-	        var colorArr = tm.getColors();
+	        var colorArr = ColorMgr.getAllColorsSinceLastReset();
 	        var json = JSON.stringify(colorArr);
 	        console.log(json);
 	      };
 	    }();
 	    var gui = new _datGui2.default.GUI();
-	    gui.add(controlAttr, 'speed', 0.001, 1).onChange(function (v) {
-	      tm.speed = v;
-	    });
+	    //gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
 	    gui.add(controlAttr, 'numBlocksOnReset', 1, 200);
 	    gui.add(controlAttr, 'blockSize', 10, 200);
 	    gui.add(controlAttr, 'maxWidthFraction', 0.01, 1);
@@ -52111,6 +52109,12 @@
 	var colorMode = { BLACK_AND_WHITE: 1, SOME_RED: 2 };
 	var _currentColorMode;
 	
+	var _colorArr;
+	
+	var reset = function reset() {
+	  _colorArr = [];
+	};
+	
 	var setColorMode = function setColorMode(mode) {
 	  _currentColorMode = mode;
 	};
@@ -52118,6 +52122,7 @@
 	var init = function init(pIn) {
 	  p = pIn;
 	
+	  _colorArr = [];
 	  _currentColorMode = colorMode.BLACK_AND_WHITE;
 	  _colorIndex = 0;
 	  _fromColor = p.color(50, 100, 250);
@@ -52132,21 +52137,31 @@
 	  var newColor;
 	  if (_currentColorMode && _currentColorMode === colorMode.SOME_RED) {
 	    if (p.random(10) < 1) {
-	      newColor = p.color(p.random(255), 0, 0);
+	      newColor = p.color(p.random(220), 0, 0);
 	    } else {
 	      newColor = p.color(p.random(220));
 	    }
 	  } else {
 	    newColor = p.color(p.random(220));
 	  }
+	  _colorArr.push(newColor);
 	  _lastColor = newColor; //p.lerpColor(_fromColor,_toColor,_colorIndex);
 	  return _lastColor;
 	};
 	
+	var getAllColorsSinceLastReset = function getAllColorsSinceLastReset() {
+	  var colorInfoArr = _colorArr.map(function (c) {
+	    return { r: p.red(c), g: p.green(c), b: p.blue(c), alpha: p.alpha(c) };
+	  });
+	  return colorInfoArr;
+	};
+	
 	exports.init = init;
+	exports.reset = reset;
 	exports.getNewColor = getNewColor;
 	exports.colorMode = colorMode;
 	exports.setColorMode = setColorMode;
+	exports.getAllColorsSinceLastReset = getAllColorsSinceLastReset;
 	
 	// var ColorMgr = function() {
 	//
@@ -52192,6 +52207,7 @@
 	
 	  var _self = this;
 	
+	  var _numReserved;
 	  var _gridRows;
 	  var maxRows, maxCols;
 	  var cellWidth, cellHeight;
@@ -52250,6 +52266,8 @@
 	    for (i = 0; i < maxRows; i++) {
 	      _gridRows.push([]);
 	    }
+	
+	    _numReserved = 0;
 	  };
 	  _init();
 	
@@ -52266,10 +52284,12 @@
 	  this.reservePos = function (pos, thing) {
 	    //var pos = thing.getGridPoint();
 	    _gridRows[pos.row][pos.col] = thing;
+	    _numReserved += 1;
 	  };
 	
 	  this.clearReservedPos = function (pos) {
 	    _gridRows[pos.row][pos.col] = undefined;
+	    _numReserved -= 1;
 	  };
 	
 	  this.clearAllReservedPos = function () {
@@ -52282,6 +52302,10 @@
 	  this.reset = function (attrReset) {
 	    attr = attrReset;
 	    _init();
+	  };
+	
+	  this.isAnyPositionFree = function () {
+	    return maxCols * maxRows > _numReserved;
 	  };
 	
 	  // accepts input col and row as a starting point
@@ -52312,6 +52336,10 @@
 	      if (!gridElement) {
 	        var pos = { row: rowIndex, col: colIndex };
 	        return pos;
+	        // } else if ( gridElement.isWaitingBeforeMoveStart() ) {
+	        //   var freeAngleAtPos = gridElement.getStationaryAngle() + p.PI;
+	        //   var pos = {row:rowIndex, col:colIndex, freeAngleAtPos: freeAngleAtPos};
+	        //   return pos;
 	      }
 	      if (limitToColumn) {
 	        // check next row since input specified column
@@ -52350,9 +52378,15 @@
 	
 	var _SoundMgr2 = _interopRequireDefault(_SoundMgr);
 	
+	var _ColorMgr = __webpack_require__(293);
+	
+	var ColorMgr = _interopRequireWildcard(_ColorMgr);
+	
 	var _tween = __webpack_require__(289);
 	
 	var _tween2 = _interopRequireDefault(_tween);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -52432,9 +52466,13 @@
 	  };
 	
 	  this.resetThings = function (numThings) {
+	    ColorMgr.reset();
 	    _tween2.default.removeAll();
+	    _thingArr.forEach(function (thing) {
+	      thing.kill();
+	    });
 	    _self.init();
-	    numThings = numThings || p.random(10, 50);
+	    numThings = p.floor(numThings) || p.floor(p.random(10, 50));
 	    var i;
 	    for (i = 0; i < numThings; i++) {
 	      _self.createNewThing();
@@ -52449,15 +52487,15 @@
 	  };
 	
 	  this.moveSomeThings = function () {
-	    var numThings = p.floor(p.random(1, _thingArr.length));
-	    _thingArr.forEach(function (thing) {
+	    var numThings = p.floor(p.random(1, 1 + _thingArr.length / 10));
+	    for (var a = 0; a < numThings; a++) {
+	      var i = p.floor(p.random(_thingArr.length));
+	      var t = _thingArr[i];
 	      var delay = p.random(10000);
-	      thing.move(delay);
-	    });
+	      t.move(delay);
+	    }
 	  };
 	};
-	// import * as ColorMgr from './ColorMgr';
-	
 	
 	exports.default = new ThingMgr();
 
@@ -52495,21 +52533,24 @@
 	  var _color;
 	  var _pos;
 	  var _offsetHeight;
-	  var _rotationAngle;
 	  var _isInitialized = false;
+	  var _stationaryAngle;
 	  var _attr = { rotationAngle: 0 };
 	  var _inTransit = false;
 	  var _isMoving = false;
 	  var _tweenPos;
 	  var _tweenAngle;
+	  var _kill;
 	
-	  var _getAngle = function _getAngle() {
+	  var _getNewAngle = function _getNewAngle() {
 	    return p.floor(p.random(4)) * p.PI / 2;
 	  };
 	
 	  var _init = function _init() {
+	    _attr.flashColor = false;
 	    _color = ColorMgr.getNewColor();
-	    _attr.rotationAngle = _getAngle();
+	    _stationaryAngle = _getNewAngle();
+	    _attr.rotationAngle = _stationaryAngle;
 	    _pos = pm.getFreePosition();
 	    if (_pos) {
 	      _isInitialized = true;
@@ -52517,12 +52558,20 @@
 	  };
 	  _init();
 	
+	  this.kill = function () {
+	    _kill = true;
+	  };
+	
 	  this.isValid = function () {
 	    return _isInitialized;
 	  };
 	
 	  this.getColor = function () {
 	    return _color;
+	  };
+	
+	  this.getStationaryAngle = function () {
+	    return _stationaryAngle;
 	  };
 	
 	  this.getGridPoint = function () {
@@ -52536,7 +52585,15 @@
 	  this.draw = function () {
 	    p.push();
 	    pm.translateToThingPos(_self);
-	    p.fill(_color);
+	    if (!_isMoving) {
+	      p.fill(_color);
+	    } else {
+	      if (_attr.flashColor) {
+	        p.fill(_color);
+	      } else {
+	        p.fill(255, 0, 0);
+	      }
+	    }
 	    p.noStroke();
 	    //p.rectMode(p.CENTER);
 	    //p.rect( 0,0, pm.cellWidth, pm.cellHeight);
@@ -52549,29 +52606,58 @@
 	    p.pop();
 	  };
 	
+	  this.isWaitingBeforeMoveStart = function () {
+	    return _isMoving;
+	  };
+	
 	  this.move = function (delay) {
 	    if (_isMoving) {
 	      return; // ignore move request
 	    }
-	    var newPos = pm.getFreePosition();
-	    if (!newPos) {
-	      return; // ignore move
+	    if (!pm.isAnyPositionFree()) {
+	      return; // ignore the move request because there is nowhere to move to
 	    }
-	    var dur = p.floor(p.random(1000, 3000));
-	    var newAngle = _getAngle();
-	    pm.reservePos(newPos, _self);
-	    pm.clearReservedPos(_pos); //TODO: maybe move this to the onStart function below???
 	    _isMoving = true;
-	    _tweenPos = new _tween2.default.Tween(_pos).delay(delay).easing(_tween2.default.Easing.Cubic.InOut).to({ col: newPos.col, row: newPos.row }, dur).onStart(function () {
-	      _inTransit = true;
-	    }).onComplete(function () {
-	      _inTransit = false;
-	      _isMoving = false;
-	      _SoundMgr2.default.playBlip1();
-	    });
-	    _tweenAngle = new _tween2.default.Tween(_attr).delay(delay).easing(_tween2.default.Easing.Cubic.InOut).to({ rotationAngle: newAngle }, dur);
-	    _tweenPos.start();
-	    _tweenAngle.start();
+	
+	    var flashTween = new _tween2.default.Tween(_attr).to({ flashColor: true }, 500).repeat(2).yoyo(true);
+	    flashTween.start();
+	
+	    var wait = window.setTimeout(function () {
+	
+	      if (_kill) {
+	        // killed while waiting
+	        return;
+	      }
+	
+	      var newPos, dur, newAngle;
+	
+	      newPos = pm.getFreePosition();
+	      if (!newPos) {
+	        // abort move becuase there is nowhere to move to
+	        // note that this case should not happen because a free position
+	        // check was done before this call (assuming the number of shapes
+	        // in the grid has not changed)
+	        _isMoving = false;
+	        return;
+	      }
+	
+	      dur = p.floor(p.random(1000, 3000));
+	      newAngle = newPos.freeAngleAtPos === undefined ? _getNewAngle() : newPos.freeAngleAtPos;
+	      pm.reservePos(newPos, _self);
+	      pm.clearReservedPos(_pos);
+	
+	      _tweenPos = new _tween2.default.Tween(_pos).easing(_tween2.default.Easing.Cubic.InOut).to({ col: newPos.col, row: newPos.row }, dur).onStart(function () {
+	        _inTransit = true;
+	      }).onComplete(function () {
+	        _inTransit = false;
+	        _isMoving = false;
+	        _stationaryAngle = _attr.rotationAngle;
+	        _SoundMgr2.default.playBlip1();
+	      });
+	      _tweenAngle = new _tween2.default.Tween(_attr).easing(_tween2.default.Easing.Cubic.InOut).to({ rotationAngle: newAngle }, dur);
+	      _tweenPos.start();
+	      _tweenAngle.start();
+	    }, delay);
 	  };
 	};
 	

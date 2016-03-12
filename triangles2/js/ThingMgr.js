@@ -1,6 +1,6 @@
 import Thing from './Thing';
 import SoundMgr from './SoundMgr';
-// import * as ColorMgr from './ColorMgr';
+import * as ColorMgr from './ColorMgr';
 import TWEEN from 'tween.js';
 
 var ThingMgr = function() {
@@ -79,9 +79,13 @@ var ThingMgr = function() {
   };
 
   this.resetThings = function(numThings) {
+    ColorMgr.reset();
     TWEEN.removeAll();
+    _thingArr.forEach( function(thing) {
+      thing.kill();
+    });
     _self.init();
-    numThings = numThings || p.random(10,50);
+    numThings = p.floor(numThings) || p.floor(p.random(10,50));
     var i;
     for ( i=0; i<numThings; i++ ) {
       _self.createNewThing();
@@ -96,11 +100,13 @@ var ThingMgr = function() {
   };
 
   this.moveSomeThings = function() {
-    var numThings = p.floor(p.random(1,_thingArr.length));
-    _thingArr.forEach( function(thing){
+    var numThings = p.floor(p.random(1,1+_thingArr.length/10));
+    for (var a=0; a < numThings; a++) {
+      var i = p.floor(p.random(_thingArr.length));
+      var t = _thingArr[i];
       var delay = p.random(10000);
-      thing.move(delay);
-    });
+      t.move(delay);
+    }
   };
 
 };

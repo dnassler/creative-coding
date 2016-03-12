@@ -8,21 +8,24 @@ var Thing = function( p, pm ) {
   var _color;
   var _pos;
   var _offsetHeight;
-  var _rotationAngle;
   var _isInitialized = false;
+  var _stationaryAngle;
   var _attr = {rotationAngle:0};
   var _inTransit = false;
   var _isMoving = false;
   var _tweenPos;
   var _tweenAngle;
+  var _kill;
 
-  var _getAngle = function() {
+  var _getNewAngle = function() {
     return p.floor(p.random(4)) * p.PI/2;
   };
 
   var _init = function() {
+    _attr.flashColor = false;
     _color = ColorMgr.getNewColor();
-    _attr.rotationAngle = _getAngle();
+    _stationaryAngle = _getNewAngle();
+    _attr.rotationAngle = _stationaryAngle;
     _pos = pm.getFreePosition();
     if ( _pos ) {
       _isInitialized = true;
@@ -30,12 +33,20 @@ var Thing = function( p, pm ) {
   };
   _init();
 
+  this.kill = function() {
+    _kill = true;
+  };
+
   this.isValid = function(){
     return _isInitialized;
   };
 
   this.getColor = function() {
     return _color;
+  };
+
+  this.getStationaryAngle = function() {
+    return _stationaryAngle;
   };
 
   this.getGridPoint = function() {
@@ -49,7 +60,15 @@ var Thing = function( p, pm ) {
   this.draw = function() {
     p.push();
     pm.translateToThingPos( _self );
-    p.fill(_color);
+    if ( !_isMoving ) {
+      p.fill(_color);
+    } else {
+      if ( _attr.flashColor ) {
+        p.fill(_color);
+      } else {
+        p.fill(255,0,0);
+      }
+    }
     p.noStroke();
     //p.rectMode(p.CENTER);
     //p.rect( 0,0, pm.cellWidth, pm.cellHeight);
@@ -65,37 +84,67 @@ var Thing = function( p, pm ) {
     p.pop();
   };
 
+  this.isWaitingBeforeMoveStart = function() {
+    return _isMoving;
+  };
+
   this.move = function(delay) {
     if ( _isMoving ) {
       return; // ignore move request
     }
-    var newPos = pm.getFreePosition();
-    if ( !newPos ) {
-      return; // ignore move
+    if ( !pm.isAnyPositionFree() ) {
+      return; // ignore the move request because there is nowhere to move to
     }
-    var dur = p.floor(p.random(1000,3000));
-    var newAngle = _getAngle();
-    pm.reservePos( newPos, _self );
-    pm.clearReservedPos( _pos ); //TODO: maybe move this to the onStart function below???
     _isMoving = true;
-    _tweenPos = new TWEEN.Tween( _pos )
-      .delay(delay)
-      .easing(TWEEN.Easing.Cubic.InOut)
-      .to({ col: newPos.col, row: newPos.row }, dur)
-      .onStart(function(){
-        _inTransit = true;
-      })
-      .onComplete(function(){
-        _inTransit = false;
+
+    var flashTween = new TWEEN.Tween( _attr )
+      .to({flashColor:true},500).repeat(2).yoyo(true);
+    flashTween.start();
+
+    var wait = window.setTimeout( function() {
+
+      if ( _kill ) {
+        // killed while waiting
+        return;
+      }
+
+      var newPos, dur, newAngle;
+
+      newPos = pm.getFreePosition();
+      if ( !newPos ) {
+        // abort move becuase there is nowhere to move to
+        // note that this case should not happen because a free position
+        // check was done before this call (assuming the number of shapes
+        // in the grid has not changed)
         _isMoving = false;
-        SoundMgr.playBlip1();
-      });
-    _tweenAngle = new TWEEN.Tween( _attr )
-      .delay(delay)
-      .easing(TWEEN.Easing.Cubic.InOut)
-      .to({ rotationAngle: newAngle }, dur );
-    _tweenPos.start();
-    _tweenAngle.start();
+        return;
+      }
+
+      dur = p.floor(p.random(1000,3000));
+      newAngle = (newPos.freeAngleAtPos === undefined) ? _getNewAngle() : newPos.freeAngleAtPos;
+      pm.reservePos( newPos, _self );
+      pm.clearReservedPos( _pos );
+
+      _tweenPos = new TWEEN.Tween( _pos )
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .to({ col: newPos.col, row: newPos.row }, dur)
+        .onStart(function(){
+          _inTransit = true;
+        })
+        .onComplete(function(){
+          _inTransit = false;
+          _isMoving = false;
+          _stationaryAngle = _attr.rotationAngle;
+          SoundMgr.playBlip1();
+        });
+      _tweenAngle = new TWEEN.Tween( _attr )
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .to({ rotationAngle: newAngle }, dur );
+      _tweenPos.start();
+      _tweenAngle.start();
+
+    }, delay);
+
   };
 
 };
