@@ -91,6 +91,9 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'saveColors' );
     gui.add( controlAttr, 'saveConfiguration' );
 
+    // controlAttr settings saved:
+    // {"scale":0.6072312974716473,"numBlocksOnReset":24.724985259945214,"blockSize":246.05764228488204,"maxWidthFraction":1,"maxHeightFraction":1.433499115596713,"colorMode":1,"soundVolume":0.1,"muteSounds":false}
+
     stats = new Stats();
     stats.domElement.style.position = 'absolute';
     stats.domElement.style.left = '0px';

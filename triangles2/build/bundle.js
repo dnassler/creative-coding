@@ -178,6 +178,9 @@
 	    gui.add(controlAttr, 'saveColors');
 	    gui.add(controlAttr, 'saveConfiguration');
 	
+	    // controlAttr settings saved:
+	    // {"scale":0.6072312974716473,"numBlocksOnReset":24.724985259945214,"blockSize":246.05764228488204,"maxWidthFraction":1,"maxHeightFraction":1.433499115596713,"colorMode":1,"soundVolume":0.1,"muteSounds":false}
+	
 	    stats = new _stats2.default();
 	    stats.domElement.style.position = 'absolute';
 	    stats.domElement.style.left = '0px';
@@ -52608,6 +52611,7 @@
 	  var _attr = { rotationAngle: 0 };
 	  var _inTransit = false;
 	  var _isMoving = false;
+	  var _onlyRotate = false;
 	  var _tweenPos;
 	  var _tweenAngle;
 	  var _kill;
@@ -52658,10 +52662,14 @@
 	    if (!_isMoving) {
 	      p.fill(_color);
 	    } else {
-	      if (_attr.flashColor) {
+	      if (_onlyRotate) {
 	        p.fill(_color);
 	      } else {
-	        p.fill(255, 0, 0);
+	        if (_attr.flashColor) {
+	          p.fill(_color);
+	        } else {
+	          p.fill(255, 0, 0);
+	        }
 	      }
 	    }
 	    p.noStroke();
@@ -52684,13 +52692,18 @@
 	    if (_isMoving) {
 	      return; // ignore move request
 	    }
-	    if (!pm.isAnyPositionFree()) {
-	      return; // ignore the move request because there is nowhere to move to
-	    }
+	    // if ( !pm.isAnyPositionFree() ) {
+	    //   return; // ignore the move request because there is nowhere to move to
+	    // }
 	    _isMoving = true;
+	    _onlyRotate = false;
 	
-	    var flashTween = new _tween2.default.Tween(_attr).to({ flashColor: true }, 500).repeat(2).yoyo(true);
-	    flashTween.start();
+	    if (pm.isAnyPositionFree()) {
+	      var flashTween = new _tween2.default.Tween(_attr).to({ flashColor: true }, 500).repeat(2).yoyo(true);
+	      flashTween.start();
+	    } else {
+	      _onlyRotate = true;
+	    }
 	
 	    var wait = window.setTimeout(function () {
 	
@@ -52701,31 +52714,47 @@
 	
 	      var newPos, dur, newAngle;
 	
-	      newPos = pm.getFreePosition();
+	      newPos = undefined;
+	      if (!_onlyRotate) {
+	        newPos = pm.getFreePosition();
+	      }
 	      if (!newPos) {
-	        // abort move becuase there is nowhere to move to
-	        // note that this case should not happen because a free position
-	        // check was done before this call (assuming the number of shapes
-	        // in the grid has not changed)
-	        _isMoving = false;
-	        return;
+	        // there is nowhere to move to
+	        //_isMoving = false;
+	        newPos = { row: _pos.row, col: _pos.col };
 	      }
 	
 	      dur = p.floor(p.random(1000, 3000));
 	      newAngle = newPos.freeAngleAtPos === undefined ? _getNewAngle() : newPos.freeAngleAtPos;
-	      pm.reservePos(newPos, _self);
-	      pm.clearReservedPos(_pos);
+	      if (!_onlyRotate) {
+	        pm.reservePos(newPos, _self);
+	        pm.clearReservedPos(_pos);
+	      } else {
+	        if (Math.abs(newAngle - _stationaryAngle) < 0.01) {
+	          if (p.random(10) < 5) {
+	            newAngle += p.PI / 2;
+	          } else {
+	            newAngle -= p.PI / 2;
+	          }
+	        }
+	      }
 	
-	      _tweenPos = new _tween2.default.Tween(_pos).easing(_tween2.default.Easing.Cubic.InOut).to({ col: newPos.col, row: newPos.row }, dur).onStart(function () {
-	        _inTransit = true;
-	      }).onComplete(function () {
-	        _inTransit = false;
-	        _isMoving = false;
+	      _tweenPos = undefined;
+	      if (!_onlyRotate) {
+	        _tweenPos = new _tween2.default.Tween(_pos).easing(_tween2.default.Easing.Cubic.InOut).to({ col: newPos.col, row: newPos.row }, dur).onStart(function () {
+	          _inTransit = true;
+	        }).onComplete(function () {
+	          _inTransit = false;
+	        });
+	      }
+	      _tweenAngle = new _tween2.default.Tween(_attr).easing(_tween2.default.Easing.Cubic.InOut).to({ rotationAngle: newAngle }, dur).onComplete(function () {
 	        _stationaryAngle = _attr.rotationAngle;
+	        _isMoving = false;
 	        _SoundMgr2.default.playBlip1();
 	      });
-	      _tweenAngle = new _tween2.default.Tween(_attr).easing(_tween2.default.Easing.Cubic.InOut).to({ rotationAngle: newAngle }, dur);
-	      _tweenPos.start();
+	      if (_tweenPos) {
+	        _tweenPos.start();
+	      }
 	      _tweenAngle.start();
 	    }, delay);
 	  };

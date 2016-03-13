@@ -13,6 +13,7 @@ var Thing = function( p, pm ) {
   var _attr = {rotationAngle:0};
   var _inTransit = false;
   var _isMoving = false;
+  var _onlyRotate = false;
   var _tweenPos;
   var _tweenAngle;
   var _kill;
@@ -63,10 +64,14 @@ var Thing = function( p, pm ) {
     if ( !_isMoving ) {
       p.fill(_color);
     } else {
-      if ( _attr.flashColor ) {
+      if ( _onlyRotate ) {
         p.fill(_color);
       } else {
-        p.fill(255,0,0);
+        if ( _attr.flashColor ) {
+          p.fill(_color);
+        } else {
+          p.fill(255,0,0);
+        }
       }
     }
     p.noStroke();
@@ -92,14 +97,19 @@ var Thing = function( p, pm ) {
     if ( _isMoving ) {
       return; // ignore move request
     }
-    if ( !pm.isAnyPositionFree() ) {
-      return; // ignore the move request because there is nowhere to move to
-    }
+    // if ( !pm.isAnyPositionFree() ) {
+    //   return; // ignore the move request because there is nowhere to move to
+    // }
     _isMoving = true;
+    _onlyRotate = false;
 
-    var flashTween = new TWEEN.Tween( _attr )
-      .to({flashColor:true},500).repeat(2).yoyo(true);
-    flashTween.start();
+    if ( pm.isAnyPositionFree() ) {
+      var flashTween = new TWEEN.Tween( _attr )
+        .to({flashColor:true},500).repeat(2).yoyo(true);
+      flashTween.start();
+    } else {
+      _onlyRotate = true;
+    }
 
     var wait = window.setTimeout( function() {
 
@@ -110,37 +120,54 @@ var Thing = function( p, pm ) {
 
       var newPos, dur, newAngle;
 
-      newPos = pm.getFreePosition();
+      newPos = undefined;
+      if ( !_onlyRotate ) {
+        newPos = pm.getFreePosition();
+      }
       if ( !newPos ) {
-        // abort move becuase there is nowhere to move to
-        // note that this case should not happen because a free position
-        // check was done before this call (assuming the number of shapes
-        // in the grid has not changed)
-        _isMoving = false;
-        return;
+        // there is nowhere to move to
+        //_isMoving = false;
+        newPos = {row:_pos.row, col:_pos.col};
       }
 
       dur = p.floor(p.random(1000,3000));
       newAngle = (newPos.freeAngleAtPos === undefined) ? _getNewAngle() : newPos.freeAngleAtPos;
-      pm.reservePos( newPos, _self );
-      pm.clearReservedPos( _pos );
+      if ( !_onlyRotate ) {
+        pm.reservePos( newPos, _self );
+        pm.clearReservedPos( _pos );
+      } else {
+        if ( Math.abs(newAngle - _stationaryAngle) < 0.01 ) {
+          if ( p.random(10) < 5 ) {
+            newAngle += p.PI/2;
+          } else {
+            newAngle -= p.PI/2;
+          }
+        }
+      }
 
-      _tweenPos = new TWEEN.Tween( _pos )
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .to({ col: newPos.col, row: newPos.row }, dur)
-        .onStart(function(){
-          _inTransit = true;
-        })
-        .onComplete(function(){
-          _inTransit = false;
-          _isMoving = false;
-          _stationaryAngle = _attr.rotationAngle;
-          SoundMgr.playBlip1();
-        });
+      _tweenPos = undefined;
+      if ( !_onlyRotate ) {
+        _tweenPos = new TWEEN.Tween( _pos )
+          .easing(TWEEN.Easing.Cubic.InOut)
+          .to({ col: newPos.col, row: newPos.row }, dur)
+          .onStart(function(){
+            _inTransit = true;
+          })
+          .onComplete(function(){
+            _inTransit = false;
+          });
+      }
       _tweenAngle = new TWEEN.Tween( _attr )
         .easing(TWEEN.Easing.Cubic.InOut)
-        .to({ rotationAngle: newAngle }, dur );
-      _tweenPos.start();
+        .to({ rotationAngle: newAngle }, dur )
+        .onComplete(function(){
+          _stationaryAngle = _attr.rotationAngle;
+          _isMoving = false;
+          SoundMgr.playBlip1();
+        });
+      if ( _tweenPos ) {
+        _tweenPos.start();
+      }
       _tweenAngle.start();
 
     }, delay);
