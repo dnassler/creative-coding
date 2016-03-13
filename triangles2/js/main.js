@@ -54,6 +54,39 @@ var sketch = function( p ) {
       this.moveSomeThings = function() {
         tm.moveSomeThings();
       };
+      this.randomConfiguration = function() {
+        if ( p.random(10) < 5 ) {
+          controlAttr.colorMode = 'BLACK_AND_WHITE';
+        } else {
+          controlAttr.colorMode = 'SOME_RED';
+        }
+        controlAttr.blockSize = p.floor(p.random(87,500));
+        var r = p.random(10);
+        if ( p < 3 ) {
+          controlAttr.maxWidthFraction = 1;
+          controlAttr.maxHeightFraction = p.random(0.3,1.2);
+        } else if ( p < 6 ) {
+          controlAttr.maxWidthFraction = p.random(0.3,1.2);
+          controlAttr.maxHeightFraction = 1;
+        } else {
+          controlAttr.maxWidthFraction = p.random(0.3,1.2);
+          controlAttr.maxHeightFraction = p.random(0.3,1.2);
+        }
+        var resetPosMgrAttr = {
+          cellWidth:controlAttr.blockSize,
+          maxWidthFraction: controlAttr.maxWidthFraction,
+          maxHeightFraction: controlAttr.maxHeightFraction
+        };
+        pm.reset( resetPosMgrAttr );
+        controlAttr.scale = 1;
+        pm.setScale( controlAttr.scale );
+        controlAttr.numBlocksOnReset = 1 + p.floor(p.random(0.4*pm.getNumCells(),pm.getNumCells()));
+        tm.resetThings( controlAttr.numBlocksOnReset );
+        // update the dat.gui display to synch it with the modified controlAttrInfo
+        for (var i in gui.__controllers) {
+          gui.__controllers[i].updateDisplay();
+        }
+      };
       this.saveColors = function() {
         var colorArr = ColorMgr.getAllColorsSinceLastReset();
         var json = JSON.stringify(colorArr);
@@ -90,6 +123,7 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'moveSomeThings' );
     gui.add( controlAttr, 'saveColors' );
     gui.add( controlAttr, 'saveConfiguration' );
+    gui.add( controlAttr, 'randomConfiguration' );
 
     // controlAttr settings saved:
     // {"scale":0.6072312974716473,"numBlocksOnReset":24.724985259945214,"blockSize":246.05764228488204,"maxWidthFraction":1,"maxHeightFraction":1.433499115596713,"colorMode":1,"soundVolume":0.1,"muteSounds":false}

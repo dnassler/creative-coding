@@ -98,6 +98,10 @@ var PositionMgr = function(p, attr) {
     return maxRows * cellHeight;
   };
 
+  this.getNumCells = function() {
+    return maxRows * maxCols;
+  };
+
   this.translateToGridPos = function() {
     p.translate( p.width/2, p.height/2 );
     p.scale( _scale );
