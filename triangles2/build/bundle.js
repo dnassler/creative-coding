@@ -119,7 +119,7 @@
 	      this.blockSize = 112;
 	      this.maxWidthFraction = 1;
 	      this.maxHeightFraction = 0.7;
-	      this.colorMode = ColorMgr.colorMode.BLACK_AND_WHITE;
+	      this.colorMode = 'SOME_RED';
 	      this.soundVolume = 0.1;
 	      this.muteSounds = false;
 	      this.resetScene = function () {
@@ -141,6 +141,7 @@
 	        } else {
 	          controlAttr.colorMode = 'SOME_RED';
 	        }
+	        ColorMgr.setColorMode(ColorMgr.colorMode[controlAttr.colorMode]);
 	        controlAttr.blockSize = p.floor(p.random(87, 500));
 	        var r = p.random(10);
 	        if (p < 3) {
@@ -214,6 +215,8 @@
 	
 	    // controlAttr settings saved:
 	    // {"scale":0.6072312974716473,"numBlocksOnReset":24.724985259945214,"blockSize":246.05764228488204,"maxWidthFraction":1,"maxHeightFraction":1.433499115596713,"colorMode":1,"soundVolume":0.1,"muteSounds":false}
+	    // {"scale":1.2412704193112065,"numBlocksOnReset":2,"blockSize":444,"maxWidthFraction":0.7541469816505819,"maxHeightFraction":0.7575294284947146,"colorMode":"BLACK_AND_WHITE","soundVolume":0.1,"muteSounds":false}
+	    // {"scale":1,"numBlocksOnReset":2,"blockSize":391,"maxWidthFraction":0.5925450718014058,"maxHeightFraction":0.9184697768847572,"colorMode":"BLACK_AND_WHITE","soundVolume":0.1,"muteSounds":false}
 	
 	    stats = new _stats2.default();
 	    stats.domElement.style.position = 'absolute';
@@ -226,6 +229,8 @@
 	    };
 	
 	    cm = ColorMgr;
+	    controlAttr.colorMode = 'SOME_RED';
+	    ColorMgr.setColorMode(ColorMgr.colorMode[controlAttr.colorMode]);
 	    _SoundMgr2.default.setVolume(controlAttr.soundVolume);
 	    var initialPosMgrAttr = {
 	      cellWidth: controlAttr.blockSize,
@@ -52701,7 +52706,8 @@
 	      p.fill(_color);
 	    } else {
 	      if (_onlyRotate) {
-	        p.fill(_color);
+	        // p.fill(_color);
+	        p.fill(200, 200, 0);
 	      } else {
 	        if (_attr.flashColor) {
 	          p.fill(_color);
@@ -52737,8 +52743,12 @@
 	    _onlyRotate = false;
 	
 	    if (pm.isAnyPositionFree()) {
-	      var flashTween = new _tween2.default.Tween(_attr).to({ flashColor: true }, 500).repeat(2).yoyo(true);
-	      flashTween.start();
+	      if (p.random(10) < 1.8) {
+	        _onlyRotate = true;
+	      } else {
+	        var flashTween = new _tween2.default.Tween(_attr).to({ flashColor: true }, 500).repeat(2).yoyo(true);
+	        flashTween.start();
+	      }
 	    } else {
 	      _onlyRotate = true;
 	    }

@@ -65,7 +65,8 @@ var Thing = function( p, pm ) {
       p.fill(_color);
     } else {
       if ( _onlyRotate ) {
-        p.fill(_color);
+        // p.fill(_color);
+        p.fill(200,200,0);
       } else {
         if ( _attr.flashColor ) {
           p.fill(_color);
@@ -104,9 +105,13 @@ var Thing = function( p, pm ) {
     _onlyRotate = false;
 
     if ( pm.isAnyPositionFree() ) {
-      var flashTween = new TWEEN.Tween( _attr )
-        .to({flashColor:true},500).repeat(2).yoyo(true);
-      flashTween.start();
+      if ( p.random(10) < 1.8 ) {
+        _onlyRotate = true;
+      } else {
+        var flashTween = new TWEEN.Tween( _attr )
+          .to({flashColor:true},500).repeat(2).yoyo(true);
+        flashTween.start();
+      }
     } else {
       _onlyRotate = true;
     }
