@@ -112,12 +112,15 @@
 	    ColorMgr.init(p);
 	
 	    controlAttr = new function () {
+	      var _self = this;
 	      this.speed = 1;
+	      this.scale = 1;
 	      this.numBlocksOnReset = 42;
 	      this.blockSize = 112;
 	      this.maxWidthFraction = 1;
 	      this.maxHeightFraction = 0.7;
 	      this.colorMode = ColorMgr.colorMode.BLACK_AND_WHITE;
+	      this.soundVolume = 0.1;
 	      this.muteSounds = false;
 	      this.resetScene = function () {
 	        var resetPosMgrAttr = {
@@ -126,6 +129,7 @@
 	          maxHeightFraction: controlAttr.maxHeightFraction
 	        };
 	        pm.reset(resetPosMgrAttr);
+	        pm.setScale(controlAttr.scale);
 	        tm.resetThings(controlAttr.numBlocksOnReset);
 	      };
 	      this.moveSomeThings = function () {
@@ -136,15 +140,35 @@
 	        var json = JSON.stringify(colorArr);
 	        console.log(json);
 	      };
+	      this.saveConfiguration = function () {
+	        var controlAttrInfo = {
+	          scale: _self.scale,
+	          numBlocksOnReset: _self.numBlocksOnReset,
+	          blockSize: _self.blockSize,
+	          maxWidthFraction: _self.maxWidthFraction,
+	          maxHeightFraction: _self.maxHeightFraction,
+	          colorMode: _self.colorMode,
+	          soundVolume: _self.soundVolume,
+	          muteSounds: _self.muteSounds
+	        };
+	        var json = JSON.stringify(controlAttrInfo);
+	        console.log(json);
+	      };
 	    }();
 	    var gui = new _datGui2.default.GUI();
 	    //gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
+	    gui.add(controlAttr, 'scale', 0.1, 4).onChange(function (v) {
+	      pm.setScale(v);
+	    });
 	    gui.add(controlAttr, 'numBlocksOnReset', 1, 200);
-	    gui.add(controlAttr, 'blockSize', 10, 200);
-	    gui.add(controlAttr, 'maxWidthFraction', 0.01, 1);
-	    gui.add(controlAttr, 'maxHeightFraction', 0.01, 1);
+	    gui.add(controlAttr, 'blockSize', 10, 1000);
+	    gui.add(controlAttr, 'maxWidthFraction', 0.01, 2);
+	    gui.add(controlAttr, 'maxHeightFraction', 0.01, 2);
 	    gui.add(controlAttr, 'colorMode', Object.keys(ColorMgr.colorMode)).onChange(function (v) {
 	      ColorMgr.setColorMode(ColorMgr.colorMode[v]);
+	    });
+	    gui.add(controlAttr, 'soundVolume', 0, 0.1).onChange(function (v) {
+	      _SoundMgr2.default.setVolume(v);
 	    });
 	    gui.add(controlAttr, 'muteSounds').onChange(function (v) {
 	      _SoundMgr2.default.mute(v);
@@ -152,6 +176,7 @@
 	    gui.add(controlAttr, 'resetScene');
 	    gui.add(controlAttr, 'moveSomeThings');
 	    gui.add(controlAttr, 'saveColors');
+	    gui.add(controlAttr, 'saveConfiguration');
 	
 	    stats = new _stats2.default();
 	    stats.domElement.style.position = 'absolute';
@@ -164,12 +189,14 @@
 	    };
 	
 	    cm = ColorMgr;
+	    _SoundMgr2.default.setVolume(controlAttr.soundVolume);
 	    var initialPosMgrAttr = {
 	      cellWidth: controlAttr.blockSize,
 	      maxWidthFraction: controlAttr.maxWidthFraction,
 	      maxHeightFraction: controlAttr.maxHeightFraction
 	    };
 	    pm = new _PositionMgr2.default(p, initialPosMgrAttr);
+	    pm.setScale(controlAttr.scale);
 	    _ThingMgr2.default.init(p, pm);
 	    tm = _ThingMgr2.default;
 	    tm.resetThings(controlAttr.numBlocksOnReset);
@@ -179,7 +206,12 @@
 	    p.background(255);
 	    _tween2.default.update();
 	    tm.update();
+	    p.push();
+	    // p.translate( p.width/2, p.height/2 );
+	    // p.scale( controlAttr.scale );
+	    // p.translate( -pm.getGridWidth() / 2, -pm.getGridHeight() / 2 );
 	    tm.draw();
+	    p.pop();
 	    // p.background(0);
 	    // p.fill(255);
 	    // var x=100, y=100;
@@ -52213,7 +52245,14 @@
 	  var cellWidth, cellHeight;
 	  var cellGutter;
 	
+	  var _scale;
+	  this.setScale = function (scale) {
+	    _scale = scale;
+	  };
+	
 	  var _init = function _init() {
+	
+	    _scale = 1;
 	
 	    attr = attr || {};
 	
@@ -52238,20 +52277,32 @@
 	        maxCols = 10;
 	      } else {
 	        maxCols = attr.maxCols || p.floor(maxWidth / attr.cellWidth);
+	        if (maxCols < 1) {
+	          maxCols = 1;
+	        }
 	      }
 	      cellWidth = p.floor(maxWidth / maxCols);
 	      cellHeight = cellWidth;
 	      maxRows = attr.maxRows || p.floor(maxHeight / cellHeight);
+	      if (maxRows < 1) {
+	        maxRows = 1;
+	      }
 	    } else {
 	      // cellHeight = cellWidth;
 	      if (!attr.maxRows && !attr.cellHeight) {
 	        maxRows = 10;
 	      } else {
 	        maxRows = attr.maxRows || p.floor(maxHeight / attr.cellHeight);
+	        if (maxRows < 1) {
+	          maxRows = 1;
+	        }
 	      }
 	      cellHeight = p.floor(maxHeight / maxRows);
 	      cellWidth = cellHeight;
 	      maxCols = attr.maxCols || p.floor(maxWidth / cellWidth);
+	      if (maxCols < 1) {
+	        maxCols = 1;
+	      }
 	    }
 	
 	    cellGutter = attr.cellGutter || 0;
@@ -52275,8 +52326,18 @@
 	    return maxCols * cellWidth;
 	  };
 	
+	  this.getGridHeight = function () {
+	    return maxRows * cellHeight;
+	  };
+	
+	  this.translateToGridPos = function () {
+	    p.translate(p.width / 2, p.height / 2);
+	    p.scale(_scale);
+	    p.translate(-maxCols * cellWidth / 2, -maxRows * cellWidth / 2);
+	  };
+	
 	  this.translateToThingPos = function (thing) {
-	    p.translate((p.width - maxCols * cellWidth) / 2, (p.height - maxRows * cellWidth) / 2);
+	    // p.translate( (p.width - maxCols*cellWidth )/2, (p.height - maxRows*cellWidth)/2);
 	    var gridPoint = thing.getGridPoint();
 	    p.translate(gridPoint.col * cellWidth, gridPoint.row * cellHeight);
 	  };
@@ -52447,10 +52508,14 @@
 	      }
 	    }
 	    if (p.millis() > _moveSomethingAt) {
-	      var i = p.floor(p.random(_thingArr.length));
-	      var t = _thingArr[i];
-	      var delay = p.random(10000);
-	      t.move(delay);
+	      if (_thingArr.length < 1) {
+	        console.log('nothing to move');
+	      } else {
+	        var i = p.floor(p.random(_thingArr.length));
+	        var t = _thingArr[i];
+	        var delay = p.random(10000);
+	        t.move(delay);
+	      }
 	      _moveSomethingAt = p.millis() + p.random(5000);
 	    }
 	    _thingArr.forEach(function (thing) {
@@ -52460,6 +52525,7 @@
 	
 	  this.draw = function () {
 	    //p.translate(-pm.getGridWidth()/2,0,-pm.getGridWidth()/2);
+	    pm.translateToGridPos();
 	    _thingArr.forEach(function (thing) {
 	      thing.draw();
 	    });
@@ -52487,6 +52553,10 @@
 	  };
 	
 	  this.moveSomeThings = function () {
+	    if (_thingArr.length < 1) {
+	      console.log('nothing to move');
+	      return;
+	    }
 	    var numThings = p.floor(p.random(1, 1 + _thingArr.length / 10));
 	    for (var a = 0; a < numThings; a++) {
 	      var i = p.floor(p.random(_thingArr.length));
@@ -52685,9 +52755,11 @@
 	
 	  var _blipSounds = [];
 	  var _muteOn;
+	  var _volume;
 	
 	  var _init = function _init() {
 	    _muteOn = false;
+	    _volume = 1;
 	    _blipSounds.push(new _p2.default.SoundFile('Blip_Select7.wav'));
 	    _blipSounds.push(new _p2.default.SoundFile('Blip_Select10.wav'));
 	    _blipSounds.push(new _p2.default.SoundFile('Blip_Select18.wav'));
@@ -52698,7 +52770,7 @@
 	      return;
 	    }
 	    var blip1 = _blipSounds[Math.floor(Math.random() * _blipSounds.length)];
-	    blip1.setVolume(0.1);
+	    blip1.setVolume(_volume);
 	    blip1.play();
 	  };
 	
@@ -52706,10 +52778,15 @@
 	    _muteOn = muteOn;
 	  };
 	
+	  var _setVolume = function _setVolume(v) {
+	    _volume = v;
+	  };
+	
 	  return {
 	    init: _init,
 	    playBlip1: _playBlip1,
-	    mute: _mute
+	    mute: _mute,
+	    setVolume: _setVolume
 	  };
 	}();
 	

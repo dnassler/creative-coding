@@ -9,7 +9,14 @@ var PositionMgr = function(p, attr) {
   var cellWidth, cellHeight;
   var cellGutter;
 
+  var _scale;
+  this.setScale = function( scale ) {
+    _scale = scale;
+  };
+
   var _init = function() {
+
+    _scale = 1;
 
     attr = attr || {};
 
@@ -38,20 +45,32 @@ var PositionMgr = function(p, attr) {
         maxCols = 10;
       } else {
         maxCols = attr.maxCols || p.floor(maxWidth / attr.cellWidth);
+        if ( maxCols < 1 ) {
+          maxCols = 1;
+        }
       }
       cellWidth = p.floor(maxWidth / maxCols);
       cellHeight = cellWidth;
       maxRows = attr.maxRows || p.floor(maxHeight / cellHeight);
+      if ( maxRows < 1 ) {
+        maxRows = 1;
+      }
     } else {
       // cellHeight = cellWidth;
       if ( !attr.maxRows && !attr.cellHeight ) {
         maxRows = 10;
       } else {
         maxRows = attr.maxRows || p.floor(maxHeight / attr.cellHeight);
+        if ( maxRows < 1 ) {
+          maxRows = 1;
+        }
       }
       cellHeight = p.floor(maxHeight / maxRows);
       cellWidth = cellHeight;
       maxCols = attr.maxCols || p.floor(maxWidth / cellWidth);
+      if ( maxCols < 1 ) {
+        maxCols = 1;
+      }
     }
 
     cellGutter = attr.cellGutter || 0;
@@ -75,8 +94,18 @@ var PositionMgr = function(p, attr) {
     return maxCols * cellWidth;
   };
 
+  this.getGridHeight = function() {
+    return maxRows * cellHeight;
+  };
+
+  this.translateToGridPos = function() {
+    p.translate( p.width/2, p.height/2 );
+    p.scale( _scale );
+    p.translate( -maxCols * cellWidth / 2, -maxRows * cellWidth / 2 );
+  };
+
   this.translateToThingPos = function( thing ) {
-    p.translate( (p.width - maxCols*cellWidth )/2, (p.height - maxRows*cellWidth)/2);
+    // p.translate( (p.width - maxCols*cellWidth )/2, (p.height - maxRows*cellWidth)/2);
     var gridPoint = thing.getGridPoint();
     p.translate(gridPoint.col * cellWidth, gridPoint.row * cellHeight);
   };

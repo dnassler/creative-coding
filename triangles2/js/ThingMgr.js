@@ -60,10 +60,14 @@ var ThingMgr = function() {
       }
     }
     if ( p.millis() > _moveSomethingAt ) {
-      var i = p.floor(p.random(_thingArr.length));
-      var t = _thingArr[i];
-      var delay = p.random(10000);
-      t.move(delay);
+      if ( _thingArr.length < 1 ) {
+        console.log('nothing to move');
+      } else {
+        var i = p.floor(p.random(_thingArr.length));
+        var t = _thingArr[i];
+        var delay = p.random(10000);
+        t.move(delay);
+      }
       _moveSomethingAt = p.millis() + p.random(5000);
     }
     _thingArr.forEach( function(thing) {
@@ -73,6 +77,7 @@ var ThingMgr = function() {
 
   this.draw = function() {
     //p.translate(-pm.getGridWidth()/2,0,-pm.getGridWidth()/2);
+    pm.translateToGridPos();
     _thingArr.forEach( function(thing) {
       thing.draw();
     });
@@ -100,6 +105,10 @@ var ThingMgr = function() {
   };
 
   this.moveSomeThings = function() {
+    if ( _thingArr.length < 1 ) {
+      console.log('nothing to move');
+      return;
+    }
     var numThings = p.floor(p.random(1,1+_thingArr.length/10));
     for (var a=0; a < numThings; a++) {
       var i = p.floor(p.random(_thingArr.length));

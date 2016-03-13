@@ -31,12 +31,15 @@ var sketch = function( p ) {
     ColorMgr.init(p);
 
     controlAttr = new function () {
+      var _self = this;
       this.speed = 1;
+      this.scale = 1;
       this.numBlocksOnReset = 42;
       this.blockSize = 112;
       this.maxWidthFraction = 1;
       this.maxHeightFraction = 0.7;
       this.colorMode = ColorMgr.colorMode.BLACK_AND_WHITE;
+      this.soundVolume = 0.1;
       this.muteSounds = false;
       this.resetScene = function() {
         var resetPosMgrAttr = {
@@ -45,6 +48,7 @@ var sketch = function( p ) {
           maxHeightFraction: controlAttr.maxHeightFraction
         };
         pm.reset(resetPosMgrAttr);
+        pm.setScale( controlAttr.scale );
         tm.resetThings( controlAttr.numBlocksOnReset );
       };
       this.moveSomeThings = function() {
@@ -55,18 +59,37 @@ var sketch = function( p ) {
         var json = JSON.stringify(colorArr);
         console.log( json );
       };
+      this.saveConfiguration = function() {
+        var controlAttrInfo = {
+          scale: _self.scale,
+          numBlocksOnReset: _self.numBlocksOnReset,
+          blockSize: _self.blockSize,
+          maxWidthFraction: _self.maxWidthFraction,
+          maxHeightFraction: _self.maxHeightFraction,
+          colorMode: _self.colorMode,
+          soundVolume: _self.soundVolume,
+          muteSounds: _self.muteSounds
+        };
+        var json = JSON.stringify(controlAttrInfo);
+        console.log( json );
+      };
     };
     var gui = new dat.GUI();
     //gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
+    gui.add( controlAttr, 'scale', 0.1, 4).onChange( function(v){
+      pm.setScale(v);
+    });
     gui.add( controlAttr, 'numBlocksOnReset', 1, 200 );
-    gui.add( controlAttr, 'blockSize', 10,200 );
-    gui.add( controlAttr, 'maxWidthFraction', 0.01, 1 );
-    gui.add( controlAttr, 'maxHeightFraction', 0.01, 1 );
+    gui.add( controlAttr, 'blockSize', 10,1000 );
+    gui.add( controlAttr, 'maxWidthFraction', 0.01, 2 );
+    gui.add( controlAttr, 'maxHeightFraction', 0.01, 2 );
     gui.add( controlAttr, 'colorMode', Object.keys(ColorMgr.colorMode) ).onChange(function(v){ ColorMgr.setColorMode(ColorMgr.colorMode[v])});
+    gui.add( controlAttr, 'soundVolume', 0, 0.1 ).onChange(function(v){ SoundMgr.setVolume(v); });
     gui.add( controlAttr, 'muteSounds' ).onChange(function(v){ SoundMgr.mute(v); });
     gui.add( controlAttr, 'resetScene' );
     gui.add( controlAttr, 'moveSomeThings' );
     gui.add( controlAttr, 'saveColors' );
+    gui.add( controlAttr, 'saveConfiguration' );
 
     stats = new Stats();
     stats.domElement.style.position = 'absolute';
@@ -79,12 +102,14 @@ var sketch = function( p ) {
     };
 
     cm = ColorMgr;
+    SoundMgr.setVolume( controlAttr.soundVolume );
     var initialPosMgrAttr = {
       cellWidth:controlAttr.blockSize,
       maxWidthFraction: controlAttr.maxWidthFraction,
       maxHeightFraction: controlAttr.maxHeightFraction
     };
     pm = new PositionMgr(p, initialPosMgrAttr);
+    pm.setScale( controlAttr.scale );
     ThingMgr.init(p,pm);
     tm = ThingMgr;
     tm.resetThings( controlAttr.numBlocksOnReset );
@@ -95,7 +120,12 @@ var sketch = function( p ) {
     p.background(255);
     TWEEN.update();
     tm.update();
+    p.push();
+    // p.translate( p.width/2, p.height/2 );
+    // p.scale( controlAttr.scale );
+    // p.translate( -pm.getGridWidth() / 2, -pm.getGridHeight() / 2 );
     tm.draw();
+    p.pop();
     // p.background(0);
     // p.fill(255);
     // var x=100, y=100;
