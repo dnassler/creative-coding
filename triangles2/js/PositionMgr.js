@@ -20,58 +20,80 @@ var PositionMgr = function(p, attr) {
 
     attr = attr || {};
 
-    if ( attr.cellWidth ) {
-      attr.cellHeight = attr.cellWidth;
-    } else if ( attr.cellHeight ) {
-      attr.cellWidth = attr.cellHeight;
-    }
+    // if ( attr.cellWidth ) {
+    //   attr.cellHeight = attr.cellWidth;
+    // } else if ( attr.cellHeight ) {
+    //   attr.cellWidth = attr.cellHeight;
+    // }
 
     var maxWidth = attr.maxWidth
       || (attr.maxWidthFraction ? attr.maxWidthFraction * p.width : undefined)
       || p.width;
-    if ( attr.cellWidth && maxWidth < attr.cellWidth ) {
-      maxWidth = attr.cellWidth;
-    }
+    // if ( attr.cellWidth && maxWidth < attr.cellWidth ) {
+    //   maxWidth = attr.cellWidth;
+    // }
     var maxHeight = attr.maxHeight
       || (attr.maxHeightFraction ? attr.maxHeightFraction * p.height : undefined)
       || p.height;
-    if ( attr.cellHeight && maxHeight < attr.cellHeight ) {
-      maxHeight = attr.cellHeight;
-    }
+    // if ( attr.cellHeight && maxHeight < attr.cellHeight ) {
+    //   maxHeight = attr.cellHeight;
+    // }
 
-    if ( maxWidth >= maxHeight ) {
-      // cellWidth = cellHeight;
-      if ( !attr.maxCols && !attr.cellWidth ) {
-        maxCols = 10;
-      } else {
-        maxCols = attr.maxCols || p.floor(maxWidth / attr.cellWidth);
-        if ( maxCols < 1 ) {
-          maxCols = 1;
-        }
-      }
-      cellWidth = p.floor(maxWidth / maxCols);
+    if ( attr.maxCols > attr.maxRows ) {
+      maxCols = attr.maxCols;
+      cellWidth = p.floor(maxWidth / attr.maxCols);
       cellHeight = cellWidth;
-      maxRows = attr.maxRows || p.floor(maxHeight / cellHeight);
-      if ( maxRows < 1 ) {
-        maxRows = 1;
+      if ( cellHeight * attr.maxRows > maxHeight ) {
+        // truncate rows that will not fit withing the height restriction
+        maxRows = p.max(1, p.floor(maxHeight / cellHeight));
+      } else {
+        maxRows = attr.maxRows;
       }
     } else {
-      // cellHeight = cellWidth;
-      if ( !attr.maxRows && !attr.cellHeight ) {
-        maxRows = 10;
-      } else {
-        maxRows = attr.maxRows || p.floor(maxHeight / attr.cellHeight);
-        if ( maxRows < 1 ) {
-          maxRows = 1;
-        }
-      }
-      cellHeight = p.floor(maxHeight / maxRows);
+      maxRows = attr.maxRows;
+      cellHeight = p.floor(maxHeight / attr.maxRows);
       cellWidth = cellHeight;
-      maxCols = attr.maxCols || p.floor(maxWidth / cellWidth);
-      if ( maxCols < 1 ) {
-        maxCols = 1;
+      if ( cellWidth * attr.maxCols > maxWidth ) {
+        // truncate cols that will not fit withing the width restriction
+        maxCols = p.max(1, p.floor(maxWidth / cellWidth));
+      } else {
+        maxCols = attr.maxCols;
       }
     }
+
+    // if ( maxWidth >= maxHeight ) {
+    //   // cellWidth = cellHeight;
+    //   if ( !attr.maxCols && !attr.cellWidth ) {
+    //     maxCols = 10;
+    //   } else {
+    //     maxCols = attr.maxCols || p.floor(maxWidth / attr.cellWidth);
+    //     if ( maxCols < 1 ) {
+    //       maxCols = 1;
+    //     }
+    //   }
+    //   cellWidth = p.floor(maxWidth / maxCols);
+    //   cellHeight = cellWidth;
+    //   maxRows = attr.maxRows || p.floor(maxHeight / cellHeight);
+    //   if ( maxRows < 1 ) {
+    //     maxRows = 1;
+    //   }
+    // } else {
+    //   // cellHeight = cellWidth;
+    //   if ( !attr.maxRows && !attr.cellHeight ) {
+    //     maxRows = 10;
+    //   } else {
+    //     maxRows = attr.maxRows || p.floor(maxHeight / attr.cellHeight);
+    //     if ( maxRows < 1 ) {
+    //       maxRows = 1;
+    //     }
+    //   }
+    //   cellHeight = p.floor(maxHeight / maxRows);
+    //   cellWidth = cellHeight;
+    //   maxCols = attr.maxCols || p.floor(maxWidth / cellWidth);
+    //   if ( maxCols < 1 ) {
+    //     maxCols = 1;
+    //   }
+    // }
 
     cellGutter = attr.cellGutter || 0;
 
