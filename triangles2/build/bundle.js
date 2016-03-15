@@ -142,7 +142,7 @@
 	        };
 	        pm.reset(resetPosMgrAttr);
 	        pm.setScale(controlAttr.scale);
-	        controlAttr.numBlocksOnReset = p.max(1, p.floor(pm.getNumCells() * p.random(0.5, 0.8)));
+	        //controlAttr.numBlocksOnReset = p.max( 1, p.floor(pm.getNumCells() * p.random(0.5,0.8)) );
 	        tm.resetThings(controlAttr.numBlocksOnReset);
 	      };
 	      this.moveSomeThings = function () {
@@ -52710,17 +52710,18 @@
 	
 	var Thing = function Thing(p, pm) {
 	  var _self = this;
-	  var _color;
+	  //var _color;
 	  var _pos;
 	  var _offsetHeight;
 	  var _isInitialized = false;
 	  var _stationaryAngle;
-	  var _attr = { rotationAngle: 0 };
+	  var _attr = { rotationAngle: 0, color: 0 };
 	  var _inTransit = false;
 	  var _isMoving = false;
 	  var _onlyRotate = false;
 	  var _tweenPos;
 	  var _tweenAngle;
+	  var _justStopped;
 	  var _kill;
 	
 	  var _getNewAngle = function _getNewAngle() {
@@ -52729,7 +52730,7 @@
 	
 	  var _init = function _init() {
 	    _attr.flashColor = false;
-	    _color = ColorMgr.getNewColor();
+	    _attr.color = ColorMgr.getNewColor();
 	    _stationaryAngle = _getNewAngle();
 	    _attr.rotationAngle = _stationaryAngle;
 	    _pos = pm.getFreePosition();
@@ -52748,7 +52749,7 @@
 	  };
 	
 	  this.getColor = function () {
-	    return _color;
+	    return _attr.color;
 	  };
 	
 	  this.getStationaryAngle = function () {
@@ -52767,14 +52768,14 @@
 	    p.push();
 	    pm.translateToThingPos(_self);
 	    if (!_isMoving) {
-	      p.fill(_color);
+	      p.fill(_attr.color);
 	    } else {
 	      if (_onlyRotate) {
-	        // p.fill(_color);
+	        // p.fill(_attr.color);
 	        p.fill(200, 200, 0);
 	      } else {
 	        if (_attr.flashColor) {
-	          p.fill(_color);
+	          p.fill(_attr.color);
 	        } else {
 	          p.fill(255, 0, 0);
 	        }
@@ -52788,6 +52789,11 @@
 	    p.rotate(_attr.rotationAngle);
 	
 	    p.triangle(-pm.cellWidth / 2, -pm.cellWidth / 2, pm.cellWidth / 2, pm.cellWidth / 2, -pm.cellWidth / 2, pm.cellWidth / 2);
+	
+	    if (_justStopped) {
+	      p.fill(200, _attr.stopTriangleAlpha);
+	      p.triangle(-pm.cellWidth / 2, -pm.cellWidth / 2, pm.cellWidth / 2, pm.cellWidth / 2, -pm.cellWidth / 2, pm.cellWidth / 2);
+	    }
 	
 	    p.pop();
 	  };
@@ -52860,6 +52866,11 @@
 	        });
 	      }
 	      _tweenAngle = new _tween2.default.Tween(_attr).easing(_tween2.default.Easing.Cubic.InOut).to({ rotationAngle: newAngle }, dur).onComplete(function () {
+	        _justStopped = true;
+	        _attr.stopTriangleAlpha = 255;
+	        var tweenToRegularColor = new _tween2.default.Tween(_attr).easing(_tween2.default.Easing.Cubic.Out).to({ stopTriangleAlpha: 0 }, 500).onComplete(function () {
+	          _justStopped = false;
+	        }).start();
 	        _stationaryAngle = _attr.rotationAngle;
 	        _isMoving = false;
 	        _SoundMgr2.default.playBlip1();

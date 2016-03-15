@@ -61,7 +61,7 @@ var sketch = function( p ) {
         };
         pm.reset(resetPosMgrAttr);
         pm.setScale( controlAttr.scale );
-        controlAttr.numBlocksOnReset = p.max( 1, p.floor(pm.getNumCells() * p.random(0.5,0.8)) );
+        //controlAttr.numBlocksOnReset = p.max( 1, p.floor(pm.getNumCells() * p.random(0.5,0.8)) );
         tm.resetThings( controlAttr.numBlocksOnReset );
       };
       this.moveSomeThings = function() {
