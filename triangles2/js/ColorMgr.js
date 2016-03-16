@@ -37,7 +37,7 @@ var getNewColor = function() {
   // _lastColor = p.color(p.random(255),p.random(255),p.random(255));//p.lerpColor(_fromColor,_toColor,_colorIndex);
   var newColor;
   if ( _currentColorMode && _currentColorMode === colorMode.SOME_RED ) {
-    if ( p.random(10) < 1 ) {
+    if ( p.random(10) < 5 ) {
       newColor = p.color(p.random(220),0,0);
     } else {
       newColor = p.color(p.random(220));
