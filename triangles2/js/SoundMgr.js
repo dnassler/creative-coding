@@ -39,6 +39,9 @@ var SoundMgr = (function() {
     if ( _soundMode === 1 ) {
       blip1 = _altBlipSounds[Math.floor(Math.random()*_altBlipSounds.length)];
       blip1.play(0,1,_volume,0,1);
+    } else if ( _soundMode === 2 ) {
+      blip1 = _altBlipSounds[Math.floor(Math.random()*_altBlipSounds.length)];
+      blip1.play(0,1,_volume,2);
     } else {
       blip1 = _blipSounds[Math.floor(Math.random()*_blipSounds.length)];
       blip1.setVolume(_volume);

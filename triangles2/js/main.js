@@ -162,12 +162,12 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'maxHeightFraction', 0.01, 2 );
     gui.add( controlAttr, 'colorMode', Object.keys(ColorMgr.colorMode) ).onChange(function(v){ ColorMgr.setColorMode(ColorMgr.colorMode[v])});
     gui.add( controlAttr, 'soundVolume', 0, 1 ).onChange(function(v){ SoundMgr.setVolume(v); });
-    gui.add( controlAttr, 'useAlternateSound', 0, 1 ).step(1).onChange(function(v){ SoundMgr.setAlternateSoundMode(v)});
+    gui.add( controlAttr, 'useAlternateSound', 0, 2 ).step(1).onChange(function(v){ SoundMgr.setAlternateSoundMode(v)});
     gui.add( controlAttr, 'muteSounds' ).onChange(function(v){ SoundMgr.mute(v); });
     gui.add( controlAttr, 'resetScene' );
     gui.add( controlAttr, 'moveSomeThings' );
-    gui.add( controlAttr, 'saveColors' );
-    gui.add( controlAttr, 'saveConfiguration' );
+    // gui.add( controlAttr, 'saveColors' );
+    // gui.add( controlAttr, 'saveConfiguration' );
     gui.add( controlAttr, 'randomConfiguration' );
 
     // controlAttr settings saved:
