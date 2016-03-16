@@ -76,6 +76,10 @@ var ThingMgr = function() {
   };
 
   this.draw = function() {
+    // if ( _self.frameJumpFactor > 0 && _holdFrameCount > 0 ) {
+    //   return;
+    // }
+
     //p.translate(-pm.getGridWidth()/2,0,-pm.getGridWidth()/2);
     pm.translateToGridPos();
     _thingArr.forEach( function(thing) {

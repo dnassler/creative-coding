@@ -109,11 +109,13 @@
 	    p.createCanvas(window.innerWidth, window.innerHeight);
 	    //p.createCanvas(p.windowWidth, p.windowHeight);
 	    //p.noLoop();
+	    p.frameRate(45);
 	
 	    ColorMgr.init(p);
 	
 	    controlAttr = new function () {
 	      var _self = this;
+	      this.showStats = false;
 	      this.speed = 1;
 	      this.scale = 1;
 	      //this.blockSize = 112;
@@ -132,6 +134,7 @@
 	      this.colorMode = 'SOME_RED';
 	      this.soundVolume = 0.1;
 	      this.muteSounds = false;
+	      this.useAlternateSound = 0;
 	      this.resetScene = function () {
 	        var resetPosMgrAttr = {
 	          //cellWidth:controlAttr.blockSize,
@@ -226,6 +229,9 @@
 	    }();
 	    var gui = new _datGui2.default.GUI();
 	    //gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
+	    gui.add(controlAttr, 'showStats').onChange(function (v) {
+	      stats.domElement.style.display = v ? 'block' : 'none';
+	    });
 	    gui.add(controlAttr, 'scale', 0.1, 4).onChange(function (v) {
 	      pm.setScale(v);
 	    });
@@ -238,8 +244,11 @@
 	    gui.add(controlAttr, 'colorMode', Object.keys(ColorMgr.colorMode)).onChange(function (v) {
 	      ColorMgr.setColorMode(ColorMgr.colorMode[v]);
 	    });
-	    gui.add(controlAttr, 'soundVolume', 0, 0.1).onChange(function (v) {
+	    gui.add(controlAttr, 'soundVolume', 0, 1).onChange(function (v) {
 	      _SoundMgr2.default.setVolume(v);
+	    });
+	    gui.add(controlAttr, 'useAlternateSound', 0, 1).step(1).onChange(function (v) {
+	      _SoundMgr2.default.setAlternateSoundMode(v);
 	    });
 	    gui.add(controlAttr, 'muteSounds').onChange(function (v) {
 	      _SoundMgr2.default.mute(v);
@@ -259,6 +268,7 @@
 	    // {"scale":0.9876547705753829,"numBlocksOnReset":5.313633683626403,"blockSize":256.78753511601303,"maxWidthFraction":0.41979519994450826,"maxHeightFraction":1.1315447577428648,"colorMode":"BLACK_AND_WHITE","soundVolume":0.1,"muteSounds":true}
 	
 	    stats = new _stats2.default();
+	    stats.domElement.style.display = 'none';
 	    stats.domElement.style.position = 'absolute';
 	    stats.domElement.style.left = '0px';
 	    stats.domElement.style.top = '0px';
@@ -52252,7 +52262,7 @@
 	  // _lastColor = p.color(p.random(255),p.random(255),p.random(255));//p.lerpColor(_fromColor,_toColor,_colorIndex);
 	  var newColor;
 	  if (_currentColorMode && _currentColorMode === colorMode.SOME_RED) {
-	    if (p.random(10) < 1) {
+	    if (p.random(10) < 5) {
 	      newColor = p.color(p.random(220), 0, 0);
 	    } else {
 	      newColor = p.color(p.random(220));
@@ -52634,6 +52644,10 @@
 	  };
 	
 	  this.draw = function () {
+	    // if ( _self.frameJumpFactor > 0 && _holdFrameCount > 0 ) {
+	    //   return;
+	    // }
+	
 	    //p.translate(-pm.getGridWidth()/2,0,-pm.getGridWidth()/2);
 	    pm.translateToGridPos();
 	    _thingArr.forEach(function (thing) {
@@ -52906,8 +52920,10 @@
 	var SoundMgr = function () {
 	
 	  var _blipSounds = [];
+	  var _altBlipSounds = [];
 	  var _muteOn;
 	  var _volume;
+	  var _soundMode = 0;
 	
 	  var _init = function _init() {
 	    _muteOn = false;
@@ -52915,15 +52931,34 @@
 	    _blipSounds.push(new _p2.default.SoundFile('Blip_Select7.wav'));
 	    _blipSounds.push(new _p2.default.SoundFile('Blip_Select10.wav'));
 	    _blipSounds.push(new _p2.default.SoundFile('Blip_Select18.wav'));
+	
+	    _altBlipSounds.push(new _p2.default.SoundFile('blip-2.mp3'));
+	    _altBlipSounds.push(new _p2.default.SoundFile('blip-3.mp3'));
+	    _altBlipSounds.push(new _p2.default.SoundFile('blip-4.mp3'));
+	    _altBlipSounds.push(new _p2.default.SoundFile('blip-5.mp3'));
+	
+	    // var reverb = new p5.Reverb();
+	    // _blipSounds.forEach(function(sf){
+	    //   sf.disconnect();
+	    //   // connect soundFile to reverb, process w/
+	    //   // 3 second reverbTime, decayRate of 2%
+	    //   reverb.process(sf, 3,10);
+	    // });
 	  };
 	
 	  var _playBlip1 = function _playBlip1() {
 	    if (_muteOn) {
 	      return;
 	    }
-	    var blip1 = _blipSounds[Math.floor(Math.random() * _blipSounds.length)];
-	    blip1.setVolume(_volume);
-	    blip1.play();
+	    var blip1;
+	    if (_soundMode === 1) {
+	      blip1 = _altBlipSounds[Math.floor(Math.random() * _altBlipSounds.length)];
+	      blip1.play(0, 1, _volume, 0, 1);
+	    } else {
+	      blip1 = _blipSounds[Math.floor(Math.random() * _blipSounds.length)];
+	      blip1.setVolume(_volume);
+	      blip1.play();
+	    }
 	  };
 	
 	  var _mute = function _mute(muteOn) {
@@ -52934,11 +52969,16 @@
 	    _volume = v;
 	  };
 	
+	  var _setAlternateSoundMode = function _setAlternateSoundMode(v) {
+	    _soundMode = v;
+	  };
+	
 	  return {
 	    init: _init,
 	    playBlip1: _playBlip1,
 	    mute: _mute,
-	    setVolume: _setVolume
+	    setVolume: _setVolume,
+	    setAlternateSoundMode: _setAlternateSoundMode
 	  };
 	}();
 	

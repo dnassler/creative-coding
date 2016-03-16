@@ -28,11 +28,13 @@ var sketch = function( p ) {
     p.createCanvas(window.innerWidth, window.innerHeight);
     //p.createCanvas(p.windowWidth, p.windowHeight);
     //p.noLoop();
+    p.frameRate(45);
 
     ColorMgr.init(p);
 
     controlAttr = new function () {
       var _self = this;
+      this.showStats = false;
       this.speed = 1;
       this.scale = 1;
       //this.blockSize = 112;
@@ -51,6 +53,7 @@ var sketch = function( p ) {
       this.colorMode = 'SOME_RED';
       this.soundVolume = 0.1;
       this.muteSounds = false;
+      this.useAlternateSound = 0;
       this.resetScene = function() {
         var resetPosMgrAttr = {
           //cellWidth:controlAttr.blockSize,
@@ -145,6 +148,9 @@ var sketch = function( p ) {
     };
     var gui = new dat.GUI();
     //gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
+    gui.add( controlAttr, 'showStats').onChange(function(v){
+      stats.domElement.style.display = (v) ? 'block' : 'none';
+    });
     gui.add( controlAttr, 'scale', 0.1, 4).onChange( function(v){
       pm.setScale(v);
     });
@@ -155,7 +161,8 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'maxWidthFraction', 0.01, 2 );
     gui.add( controlAttr, 'maxHeightFraction', 0.01, 2 );
     gui.add( controlAttr, 'colorMode', Object.keys(ColorMgr.colorMode) ).onChange(function(v){ ColorMgr.setColorMode(ColorMgr.colorMode[v])});
-    gui.add( controlAttr, 'soundVolume', 0, 0.1 ).onChange(function(v){ SoundMgr.setVolume(v); });
+    gui.add( controlAttr, 'soundVolume', 0, 1 ).onChange(function(v){ SoundMgr.setVolume(v); });
+    gui.add( controlAttr, 'useAlternateSound', 0, 1 ).step(1).onChange(function(v){ SoundMgr.setAlternateSoundMode(v)});
     gui.add( controlAttr, 'muteSounds' ).onChange(function(v){ SoundMgr.mute(v); });
     gui.add( controlAttr, 'resetScene' );
     gui.add( controlAttr, 'moveSomeThings' );
@@ -172,6 +179,7 @@ var sketch = function( p ) {
     // {"scale":0.9876547705753829,"numBlocksOnReset":5.313633683626403,"blockSize":256.78753511601303,"maxWidthFraction":0.41979519994450826,"maxHeightFraction":1.1315447577428648,"colorMode":"BLACK_AND_WHITE","soundVolume":0.1,"muteSounds":true}
 
     stats = new Stats();
+    stats.domElement.style.display = 'none';
     stats.domElement.style.position = 'absolute';
     stats.domElement.style.left = '0px';
     stats.domElement.style.top = '0px';
