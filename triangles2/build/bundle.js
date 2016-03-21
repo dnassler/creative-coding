@@ -232,6 +232,9 @@
 	        var json = JSON.stringify(controlAttrInfo);
 	        console.log(json);
 	      };
+	      this.saveScreen = function () {
+	        p.save('triangles2_screen.png');
+	      };
 	    }();
 	    var gui = new _datGui2.default.GUI();
 	    //gui.add( controlAttr, 'speed', 0.001, 1).onChange(function(v){ tm.speed = v; });
@@ -264,6 +267,7 @@
 	    // gui.add( controlAttr, 'saveColors' );
 	    // gui.add( controlAttr, 'saveConfiguration' );
 	    gui.add(controlAttr, 'randomConfiguration');
+	    gui.add(controlAttr, 'saveScreen');
 	
 	    // controlAttr settings saved:
 	    // {"scale":0.6072312974716473,"numBlocksOnReset":24.724985259945214,"blockSize":246.05764228488204,"maxWidthFraction":1,"maxHeightFraction":1.433499115596713,"colorMode":1,"soundVolume":0.1,"muteSounds":false}
