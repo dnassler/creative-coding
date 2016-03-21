@@ -10,15 +10,18 @@ import PositionMgr from './PositionMgr';
 import ThingMgr from './ThingMgr';
 import SoundMgr from './SoundMgr';
 
+var cm, pm, tm;
+var sm;
+
 var sketch = function( p ) {
 
   var controlAttr;
   var stats;
-  var cm, pm, tm;
-  var sm;
+
+  var fft, peakDetect, audioIn;
 
   p.preload = function() {
-    SoundMgr.init();
+    SoundMgr.init(p);
     // blip1 = new p5.SoundFile('Blip_Select7.wav',function(){
     //   blip1.setVolume(1);
     // });
@@ -29,6 +32,9 @@ var sketch = function( p ) {
     //p.createCanvas(p.windowWidth, p.windowHeight);
     //p.noLoop();
     p.frameRate(45);
+
+    // audioIn = new p5.AudioIn();
+    // audioIn.start();
 
     ColorMgr.init(p);
 
@@ -71,11 +77,11 @@ var sketch = function( p ) {
         tm.moveSomeThings();
       };
       this.randomConfiguration = function() {
-        if ( p.random(10) < 5 ) {
-          controlAttr.colorMode = 'BLACK_AND_WHITE';
-        } else {
-          controlAttr.colorMode = 'SOME_RED';
-        }
+        // if ( p.random(10) < 5 ) {
+        //   controlAttr.colorMode = 'BLACK_AND_WHITE';
+        // } else {
+        //   controlAttr.colorMode = 'SOME_RED';
+        // }
         ColorMgr.setColorMode(ColorMgr.colorMode[controlAttr.colorMode]);
         //controlAttr.blockSize = p.floor(p.random(87,500));
         var r = p.random(10);
@@ -202,14 +208,25 @@ var sketch = function( p ) {
     };
     pm = new PositionMgr(p, initialPosMgrAttr);
     pm.setScale( controlAttr.scale );
-    ThingMgr.init(p,pm);
+    ThingMgr.init(p, pm);
     tm = ThingMgr;
     tm.resetThings( controlAttr.numBlocksOnReset );
+
+    // fft = new p5.FFT();
+    // audioIn.connect( fft );
+    // peakDetect = new p5.PeakDetect();
+    //peakDetect.onPeak( tm.peakDetected );
 
   };
 
   p.draw = function() {
-    p.background(255);
+    // fft.analyze();
+    // peakDetect.update(fft);
+    // if ( peakDetect.isDetected ) {
+    //   console.log(peakDetect.isDetected +  ' -- ' + audioIn.getLevel());
+    // }
+
+    p.background(ColorMgr.bgColor);
     TWEEN.update();
     tm.update();
     p.push();
@@ -233,4 +250,4 @@ var sketch = function( p ) {
 };
 var myp5 = new p5(sketch);
 
-export { myp5 };
+export { myp5 as p, pm };

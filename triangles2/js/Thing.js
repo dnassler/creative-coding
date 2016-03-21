@@ -2,8 +2,9 @@ import TWEEN from 'tween.js';
 // import 'p5' from 'p5;'
 import SoundMgr from './SoundMgr';
 import * as ColorMgr from './ColorMgr';
+// import {p, pm} from './main.js';
 
-var Thing = function( p, pm ) {
+var Thing = function(p, pm) {
   var _self = this;
   //var _color;
   var _pos;
@@ -43,6 +44,10 @@ var Thing = function( p, pm ) {
     return _isInitialized;
   };
 
+  this.isMoving = function() {
+    return _isMoving;
+  };
+
   this.getColor = function() {
     return _attr.color;
   };
@@ -72,7 +77,7 @@ var Thing = function( p, pm ) {
         if ( _attr.flashColor ) {
           p.fill(_attr.color);
         } else {
-          p.fill(255,0,0);
+          p.fill(ColorMgr.movingColor);
         }
       }
     }
@@ -103,7 +108,42 @@ var Thing = function( p, pm ) {
     return _isMoving;
   };
 
-  this.move = function(delay) {
+  //<<<TODO:fix below to clear/reserve positions in the grid like how move() does
+  // returns a promise that will resolve when move completed
+  this.moveInSpecifiedDirection = function( dir, dur ) {
+    _isMoving = true;
+    _tweenPos = undefined;
+    var newPos = {row:_pos.row, col:_pos.col};
+    if ( dir === pm.Directions.UP ) {
+      newPos.row -= 1;
+    } else if ( dir === pm.Directions.DOWN ) {
+      newPos.row += 1;
+    } else if ( dir === pm.Directions.LEFT ) {
+      newPos.col -= 1;
+    } else if ( dir === pm.Directions.RIGHT ) {
+      newPos.col += 1;
+    }
+    pm.reservePos( newPos, _self );
+    var easing = TWEEN.Easing.Cubic.InOut;
+    var p = new Promise(function(resolve,reject){
+      _tweenPos = new TWEEN.Tween( _pos )
+        .easing(easing)
+        .to({ col: newPos.col, row: newPos.row }, dur)
+        .onStart(function(){
+          _inTransit = true;
+        })
+        .onComplete(function(){
+          _inTransit = false;
+          _isMoving = false;
+          SoundMgr.playBlip1();
+          resolve(_self);
+        })
+        .start();
+    });
+    return p;
+  };
+
+  this.move = function(delay, duration, onlyRotate, easing) {
     if ( _isMoving ) {
       return; // ignore move request
     }
@@ -113,7 +153,7 @@ var Thing = function( p, pm ) {
     _isMoving = true;
     _onlyRotate = false;
 
-    if ( pm.isAnyPositionFree() ) {
+    if ( !onlyRotate && pm.isAnyPositionFree() ) {
       if ( p.random(10) < 1.8 ) {
         _onlyRotate = true;
       } else {
@@ -144,7 +184,7 @@ var Thing = function( p, pm ) {
         newPos = {row:_pos.row, col:_pos.col};
       }
 
-      dur = p.floor(p.random(1000,3000));
+      dur = duration || p.floor(p.random(1000,3000));
       newAngle = (newPos.freeAngleAtPos === undefined) ? _getNewAngle() : newPos.freeAngleAtPos;
       if ( !_onlyRotate ) {
         pm.reservePos( newPos, _self );
@@ -160,9 +200,10 @@ var Thing = function( p, pm ) {
       }
 
       _tweenPos = undefined;
+      easing = easing || TWEEN.Easing.Cubic.InOut;
       if ( !_onlyRotate ) {
         _tweenPos = new TWEEN.Tween( _pos )
-          .easing(TWEEN.Easing.Cubic.InOut)
+          .easing(easing)
           .to({ col: newPos.col, row: newPos.row }, dur)
           .onStart(function(){
             _inTransit = true;
@@ -172,7 +213,7 @@ var Thing = function( p, pm ) {
           });
       }
       _tweenAngle = new TWEEN.Tween( _attr )
-        .easing(TWEEN.Easing.Cubic.InOut)
+        .easing(easing)
         .to({ rotationAngle: newAngle }, dur )
         .onComplete(function(){
           _justStopped = true;
@@ -186,6 +227,7 @@ var Thing = function( p, pm ) {
             .start();
           _stationaryAngle = _attr.rotationAngle;
           _isMoving = false;
+          _onlyRotate = false;
           SoundMgr.playBlip1();
         });
       if ( _tweenPos ) {

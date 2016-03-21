@@ -1,7 +1,11 @@
+// import {p} from './main.js';
 
 var PositionMgr = function(p, attr) {
 
   var _self = this;
+
+  var Directions = {UP: 1, DOWN: 2, LEFT: 3, RIGHT: 4};
+  this.Directions = Directions;
 
   var _numReserved;
   var _gridRows;
@@ -159,8 +163,155 @@ var PositionMgr = function(p, attr) {
     _init();
   };
 
+  // thing: may be a Thing instance or else must be a position Object
+  // with row and col keys
+  this.getAdjacentFreeDirections = function( gridPoint ) {
+    if ( !_self.isAnyPositionFree() ) {
+      return null;
+    }
+    var freeAdjacentDirections = [];
+    var row;
+    if ( gridPoint.row - 1 > 0 ) {
+      row = _gridRows[ gridPoint.row -1 ];
+      if ( !row[gridPoint.col] ) {
+        freeAdjacentDirections.push(Directions.UP);
+      }
+    }
+    if ( gridPoint.row + 1 < maxRows ) {
+      row = _gridRows[ gridPoint.row +1 ];
+      if ( !row[gridPoint.col] ) {
+        freeAdjacentDirections.push(Directions.DOWN);
+      }
+    }
+    if ( gridPoint.col - 1 > 0 ) {
+      row = _gridRows[gridPoint.row];
+      if ( !row[gridPoint.col -1] ) {
+        freeAdjacentDirections.push(Directions.LEFT);
+      }
+    }
+    if ( gridPoint.col + 1 < maxCols ) {
+      row = _gridRows[gridPoint.row];
+      if ( !row[gridPoint.col +1] ) {
+        freeAdjacentDirections.push(Directions.RIGHT);
+      }
+    }
+    if ( freeAdjacentDirections.length > 0 ) {
+      return freeAdjacentDirections;
+    }
+    return null;
+  };
+
+  this.getGridPointPlusDirection = function( gridPoint, direction ) {
+    var newGridPoint = {row:gridPoint.row, col:gridPoint.col};
+    if ( direction === Directions.UP ) {
+      newGridPoint.row -= 1;
+    } else if ( direction === Directions.DOWN ) {
+      newGridPoint.row += 1;
+    } else if ( direction === Directions.LEFT ) {
+      newGridPoint.col -= 1;
+    } else if ( direction === Directions.RIGHT ) {
+      newGridPoint.col += 1;
+    }
+    if ( newGridPoint.row < 0 || newGridPoint.row >= maxRows
+      || newGridPoint.col < 0 || newGridPoint.col >= maxCols ) {
+        return null;
+    }
+    return newGridPoint;
+  };
+
+  this.getGridPointsNearbyPerpendicularToDirection = function( gridPoint, direction ) {
+    var pointsFreeArr = [];
+    var testPoint;
+    if ( direction === Directions.UP || direction === Directions.DOWN ) {
+      testPoint = {row:gridPoint.row, col:gridPoint.col};
+      while ( testPoint.col > 0 ) {
+        testPoint.col -= 1;
+        if ( !_self.isPosFree( testPoint ) ) {
+          break;
+        }
+        pointsFreeArr.push( {row:testPoint.row, col:testPoint.col} );
+      }
+      testPoint = {row:gridPoint.row, col:gridPoint.col};
+      while ( testPoint.col < maxCols-1 ) {
+        testPoint.col += 1;
+        if ( !_self.isPosFree( testPoint ) ) {
+          break;
+        }
+        pointsFreeArr.push( {row:testPoint.row, col:testPoint.col} );
+      }
+    } else {
+      testPoint = {row:gridPoint.row, col:gridPoint.col};
+      while ( testPoint.row > 0 ) {
+        testPoint.row -= 1;
+        if ( !_self.isPosFree( testPoint ) ) {
+          break;
+        }
+        pointsFreeArr.push( {row:testPoint.row, col:testPoint.col} );
+      }
+      testPoint = {row:gridPoint.row, col:gridPoint.col};
+      while ( testPoint.row < maxRows-1 ) {
+        testPoint.row += 1;
+        if ( !_self.isPosFree( testPoint ) ) {
+          break;
+        }
+        pointsFreeArr.push( {row:testPoint.row, col:testPoint.col} );
+      }
+    }
+    return pointsFreeArr;
+  };
+
+  this.getOtherThingsToMoveInSpecifiedDirection = function( gridPoint, direction, thingsArr ) {
+    var otherThingsArr;
+    if ( direction === Directions.UP ) {
+      otherThingsArr = _self.getThingsBelow( gridPoint, thingsArr );
+    } else if ( direction === Directions.DOWN ) {
+      otherThingsArr = _self.getThingsAbove( gridPoint, thingsArr );
+    } else if ( direction === Directions.LEFT ) {
+      otherThingsArr = _self.getThingsRight( gridPoint, thingsArr );
+    } else if ( direction === Directions.RIGHT ) {
+      otherThingsArr = _self.getThingsLeft( gridPoint, thingsArr );
+    }
+    return otherThingsArr;
+  };
+
+  this.getThingsAbove = function( gridPoint, thingsArr ){
+    var tArr = thingsArr.filter( function(tItem){
+      var tItemPoint = tItem.getGridPoint();
+      return (tItemPoint.col === gridPoint.col && tItemPoint.row < gridPoint.row);
+    });
+    return tArr;
+  };
+  this.getThingsBelow = function( gridPoint, thingsArr ){
+    var tArr = thingsArr.filter( function(tItem){
+      var tItemPoint = tItem.getGridPoint();
+      return (tItemPoint.col === gridPoint.col && tItemPoint.row > gridPoint.row);
+    });
+    return tArr;
+  };
+  this.getThingsLeft = function( gridPoint, thingsArr ){
+    var tArr = thingsArr.filter( function(tItem){
+      var tItemPoint = tItem.getGridPoint();
+      return (tItemPoint.row === gridPoint.row && tItemPoint.col < gridPoint.col);
+    });
+    return tArr;
+  };
+  this.getThingsRight = function( gridPoint, thingsArr ){
+    var tArr = thingsArr.filter( function(tItem){
+      var tItemPoint = tItem.getGridPoint();
+      return (tItemPoint.row === gridPoint.row && tItemPoint.col > gridPoint.col);
+    });
+    return tArr;
+  };
+
+
   this.isAnyPositionFree = function() {
     return ((maxCols * maxRows) > _numReserved);
+  };
+
+  this.isPosFree = function( pos ) {
+    var row = _gridRows[ pos.row ];
+    var gridElement = row[ pos.col ];
+    return !gridElement;
   };
 
   // accepts input col and row as a starting point

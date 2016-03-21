@@ -1,7 +1,10 @@
 import p5 from 'p5';
-import 'p5/lib/addons/p5.sound.js';
+// import 'p5/lib/addons/p5.sound.js';
+// import {p} from './main.js';
 
 var SoundMgr = (function() {
+
+  var p;
 
   var _blipSounds = [];
   var _altBlipSounds = [];
@@ -9,7 +12,8 @@ var SoundMgr = (function() {
   var _volume;
   var _soundMode = 0;
 
-  var _init = function() {
+  var _init = function(p0) {
+    p = p0;
     _muteOn = false;
     _volume = 1;
     _blipSounds.push( new p5.SoundFile('Blip_Select7.wav') );
@@ -47,6 +51,12 @@ var SoundMgr = (function() {
       blip1.setVolume(_volume);
       blip1.play();
     }
+
+    //main.test1();
+    // console.log('myp5.PI = '+p.PI);
+    // p.noStroke();
+    // p.fill(255,0,0);
+    // p.rect(100,100,100,100);
   };
 
   var _mute = function( muteOn ) {

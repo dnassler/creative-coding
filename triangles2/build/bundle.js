@@ -49,7 +49,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.myp5 = undefined;
+	exports.pm = exports.p = undefined;
 	
 	__webpack_require__(1);
 	
@@ -91,15 +91,18 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	var cm, pm, tm;
+	var sm;
+	
 	var sketch = function sketch(p) {
 	
 	  var controlAttr;
 	  var stats;
-	  var cm, pm, tm;
-	  var sm;
+	
+	  var fft, peakDetect, audioIn;
 	
 	  p.preload = function () {
-	    _SoundMgr2.default.init();
+	    _SoundMgr2.default.init(p);
 	    // blip1 = new p5.SoundFile('Blip_Select7.wav',function(){
 	    //   blip1.setVolume(1);
 	    // });
@@ -110,6 +113,9 @@
 	    //p.createCanvas(p.windowWidth, p.windowHeight);
 	    //p.noLoop();
 	    p.frameRate(45);
+	
+	    // audioIn = new p5.AudioIn();
+	    // audioIn.start();
 	
 	    ColorMgr.init(p);
 	
@@ -152,11 +158,11 @@
 	        tm.moveSomeThings();
 	      };
 	      this.randomConfiguration = function () {
-	        if (p.random(10) < 5) {
-	          controlAttr.colorMode = 'BLACK_AND_WHITE';
-	        } else {
-	          controlAttr.colorMode = 'SOME_RED';
-	        }
+	        // if ( p.random(10) < 5 ) {
+	        //   controlAttr.colorMode = 'BLACK_AND_WHITE';
+	        // } else {
+	        //   controlAttr.colorMode = 'SOME_RED';
+	        // }
 	        ColorMgr.setColorMode(ColorMgr.colorMode[controlAttr.colorMode]);
 	        //controlAttr.blockSize = p.floor(p.random(87,500));
 	        var r = p.random(10);
@@ -289,15 +295,26 @@
 	      maxWidthFraction: controlAttr.maxWidthFraction,
 	      maxHeightFraction: controlAttr.maxHeightFraction
 	    };
-	    pm = new _PositionMgr2.default(p, initialPosMgrAttr);
+	    exports.pm = pm = new _PositionMgr2.default(p, initialPosMgrAttr);
 	    pm.setScale(controlAttr.scale);
 	    _ThingMgr2.default.init(p, pm);
 	    tm = _ThingMgr2.default;
 	    tm.resetThings(controlAttr.numBlocksOnReset);
+	
+	    // fft = new p5.FFT();
+	    // audioIn.connect( fft );
+	    // peakDetect = new p5.PeakDetect();
+	    //peakDetect.onPeak( tm.peakDetected );
 	  };
 	
 	  p.draw = function () {
-	    p.background(255);
+	    // fft.analyze();
+	    // peakDetect.update(fft);
+	    // if ( peakDetect.isDetected ) {
+	    //   console.log(peakDetect.isDetected +  ' -- ' + audioIn.getLevel());
+	    // }
+	
+	    p.background(ColorMgr.bgColor);
 	    _tween2.default.update();
 	    tm.update();
 	    p.push();
@@ -320,7 +337,8 @@
 	};
 	var myp5 = new _p2.default(sketch);
 	
-	exports.myp5 = myp5;
+	exports.p = myp5;
+	exports.pm = pm;
 
 /***/ },
 /* 1 */
@@ -52224,36 +52242,50 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	// import {p} from './main.js';
 	
 	var p;
-	var _colorIndex;
-	var _fromColor;
-	var _toColor;
-	var _lastColor;
-	var _mode;
 	
-	var colorMode = { BLACK_AND_WHITE: 1, SOME_RED: 2 };
+	var _lastColor;
+	
+	var colorMode = { BLACK_AND_WHITE: 1, SOME_RED: 2,
+	  MULTICOLOUR: 3,
+	  REVERSE_B_AND_W: 4, REVERSE_SOME_RED: 5,
+	  REVERSE_SOME_BLUE: 6, REVERSE_LIGHT_BLUE: 7
+	};
 	var _currentColorMode;
 	
 	var _colorArr;
 	
+	var _bgColor;
+	var _movingColor;
+	
 	var reset = function reset() {
 	  _colorArr = [];
+	  _lastColor = undefined;
+	  if (_currentColorMode === colorMode.REVERSE_B_AND_W || _currentColorMode === colorMode.REVERSE_SOME_RED || _currentColorMode === colorMode.REVERSE_SOME_BLUE || _currentColorMode === colorMode.REVERSE_LIGHT_BLUE) {
+	    exports.bgColor = _bgColor = p.color(0);
+	  } else {
+	    exports.bgColor = _bgColor = p.color(255);
+	  }
+	  if (_currentColorMode === colorMode.REVERSE_SOME_BLUE || _currentColorMode === colorMode.REVERSE_LIGHT_BLUE) {
+	    exports.movingColor = _movingColor = p.color(0, 0, 255);
+	  } else if (_currentColorMode === colorMode.MULTICOLOUR) {
+	    exports.movingColor = _movingColor = p.color(0, 0, 0);
+	  } else {
+	    exports.movingColor = _movingColor = p.color(255, 0, 0);
+	  }
 	};
 	
 	var setColorMode = function setColorMode(mode) {
 	  _currentColorMode = mode;
 	};
 	
-	var init = function init(pIn) {
-	  p = pIn;
-	
-	  _colorArr = [];
-	  _currentColorMode = colorMode.BLACK_AND_WHITE;
-	  _colorIndex = 0;
-	  _fromColor = p.color(50, 100, 250);
-	  _toColor = p.color(150, 150, 100);
-	  _lastColor = undefined;
+	var init = function init(p0) {
+	  p = p0;
+	  // _currentColorMode = colorMode.BLACK_AND_WHITE;
+	  // _bgColor = p.color(255);
+	  reset();
 	};
 	
 	var getNewColor = function getNewColor() {
@@ -52261,11 +52293,37 @@
 	  //_colorIndex = colorIndex !== undefined ? colorIndex : p.random(0,1);
 	  // _lastColor = p.color(p.random(255),p.random(255),p.random(255));//p.lerpColor(_fromColor,_toColor,_colorIndex);
 	  var newColor;
-	  if (_currentColorMode && _currentColorMode === colorMode.SOME_RED) {
+	  if (_currentColorMode === colorMode.SOME_RED) {
 	    if (p.random(10) < 5) {
 	      newColor = p.color(p.random(220), 0, 0);
 	    } else {
 	      newColor = p.color(p.random(220));
+	    }
+	  } else if (_currentColorMode === colorMode.MULTICOLOUR) {
+	    if (p.random(10) < 5) {
+	      newColor = p.color(p.random(150), p.random(150), p.random(150));
+	    } else {
+	      newColor = p.color(p.random(10, 240));
+	    }
+	  } else if (_currentColorMode === colorMode.REVERSE_B_AND_W) {
+	    newColor = p.color(p.random(200, 255));
+	  } else if (_currentColorMode === colorMode.REVERSE_SOME_RED) {
+	    if (p.random(10) < 5) {
+	      newColor = p.color(p.random(30, 220), 0, 0);
+	    } else {
+	      newColor = p.color(p.random(10, 240));
+	    }
+	  } else if (_currentColorMode === colorMode.REVERSE_SOME_BLUE) {
+	    if (p.random(10) < 5) {
+	      newColor = p.color(0, 0, p.random(30, 220));
+	    } else {
+	      newColor = p.color(p.random(10, 240));
+	    }
+	  } else if (_currentColorMode === colorMode.REVERSE_LIGHT_BLUE) {
+	    if (p.random(10) < 5) {
+	      newColor = p.color(0, p.floor(p.random(150, 200)), 255);
+	    } else {
+	      newColor = p.color(p.random(200, 255));
 	    }
 	  } else {
 	    newColor = p.color(p.random(220));
@@ -52288,6 +52346,8 @@
 	exports.colorMode = colorMode;
 	exports.setColorMode = setColorMode;
 	exports.getAllColorsSinceLastReset = getAllColorsSinceLastReset;
+	exports.bgColor = _bgColor;
+	exports.movingColor = _movingColor;
 	
 	// var ColorMgr = function() {
 	//
@@ -52328,10 +52388,14 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	// import {p} from './main.js';
 	
 	var PositionMgr = function PositionMgr(p, attr) {
 	
 	  var _self = this;
+	
+	  var Directions = { UP: 1, DOWN: 2, LEFT: 3, RIGHT: 4 };
+	  this.Directions = Directions;
 	
 	  var _numReserved;
 	  var _gridRows;
@@ -52485,8 +52549,153 @@
 	    _init();
 	  };
 	
+	  // thing: may be a Thing instance or else must be a position Object
+	  // with row and col keys
+	  this.getAdjacentFreeDirections = function (gridPoint) {
+	    if (!_self.isAnyPositionFree()) {
+	      return null;
+	    }
+	    var freeAdjacentDirections = [];
+	    var row;
+	    if (gridPoint.row - 1 > 0) {
+	      row = _gridRows[gridPoint.row - 1];
+	      if (!row[gridPoint.col]) {
+	        freeAdjacentDirections.push(Directions.UP);
+	      }
+	    }
+	    if (gridPoint.row + 1 < maxRows) {
+	      row = _gridRows[gridPoint.row + 1];
+	      if (!row[gridPoint.col]) {
+	        freeAdjacentDirections.push(Directions.DOWN);
+	      }
+	    }
+	    if (gridPoint.col - 1 > 0) {
+	      row = _gridRows[gridPoint.row];
+	      if (!row[gridPoint.col - 1]) {
+	        freeAdjacentDirections.push(Directions.LEFT);
+	      }
+	    }
+	    if (gridPoint.col + 1 < maxCols) {
+	      row = _gridRows[gridPoint.row];
+	      if (!row[gridPoint.col + 1]) {
+	        freeAdjacentDirections.push(Directions.RIGHT);
+	      }
+	    }
+	    if (freeAdjacentDirections.length > 0) {
+	      return freeAdjacentDirections;
+	    }
+	    return null;
+	  };
+	
+	  this.getGridPointPlusDirection = function (gridPoint, direction) {
+	    var newGridPoint = { row: gridPoint.row, col: gridPoint.col };
+	    if (direction === Directions.UP) {
+	      newGridPoint.row -= 1;
+	    } else if (direction === Directions.DOWN) {
+	      newGridPoint.row += 1;
+	    } else if (direction === Directions.LEFT) {
+	      newGridPoint.col -= 1;
+	    } else if (direction === Directions.RIGHT) {
+	      newGridPoint.col += 1;
+	    }
+	    if (newGridPoint.row < 0 || newGridPoint.row >= maxRows || newGridPoint.col < 0 || newGridPoint.col >= maxCols) {
+	      return null;
+	    }
+	    return newGridPoint;
+	  };
+	
+	  this.getGridPointsNearbyPerpendicularToDirection = function (gridPoint, direction) {
+	    var pointsFreeArr = [];
+	    var testPoint;
+	    if (direction === Directions.UP || direction === Directions.DOWN) {
+	      testPoint = { row: gridPoint.row, col: gridPoint.col };
+	      while (testPoint.col > 0) {
+	        testPoint.col -= 1;
+	        if (!_self.isPosFree(testPoint)) {
+	          break;
+	        }
+	        pointsFreeArr.push({ row: testPoint.row, col: testPoint.col });
+	      }
+	      testPoint = { row: gridPoint.row, col: gridPoint.col };
+	      while (testPoint.col < maxCols - 1) {
+	        testPoint.col += 1;
+	        if (!_self.isPosFree(testPoint)) {
+	          break;
+	        }
+	        pointsFreeArr.push({ row: testPoint.row, col: testPoint.col });
+	      }
+	    } else {
+	      testPoint = { row: gridPoint.row, col: gridPoint.col };
+	      while (testPoint.row > 0) {
+	        testPoint.row -= 1;
+	        if (!_self.isPosFree(testPoint)) {
+	          break;
+	        }
+	        pointsFreeArr.push({ row: testPoint.row, col: testPoint.col });
+	      }
+	      testPoint = { row: gridPoint.row, col: gridPoint.col };
+	      while (testPoint.row < maxRows - 1) {
+	        testPoint.row += 1;
+	        if (!_self.isPosFree(testPoint)) {
+	          break;
+	        }
+	        pointsFreeArr.push({ row: testPoint.row, col: testPoint.col });
+	      }
+	    }
+	    return pointsFreeArr;
+	  };
+	
+	  this.getOtherThingsToMoveInSpecifiedDirection = function (gridPoint, direction, thingsArr) {
+	    var otherThingsArr;
+	    if (direction === Directions.UP) {
+	      otherThingsArr = _self.getThingsBelow(gridPoint, thingsArr);
+	    } else if (direction === Directions.DOWN) {
+	      otherThingsArr = _self.getThingsAbove(gridPoint, thingsArr);
+	    } else if (direction === Directions.LEFT) {
+	      otherThingsArr = _self.getThingsRight(gridPoint, thingsArr);
+	    } else if (direction === Directions.RIGHT) {
+	      otherThingsArr = _self.getThingsLeft(gridPoint, thingsArr);
+	    }
+	    return otherThingsArr;
+	  };
+	
+	  this.getThingsAbove = function (gridPoint, thingsArr) {
+	    var tArr = thingsArr.filter(function (tItem) {
+	      var tItemPoint = tItem.getGridPoint();
+	      return tItemPoint.col === gridPoint.col && tItemPoint.row < gridPoint.row;
+	    });
+	    return tArr;
+	  };
+	  this.getThingsBelow = function (gridPoint, thingsArr) {
+	    var tArr = thingsArr.filter(function (tItem) {
+	      var tItemPoint = tItem.getGridPoint();
+	      return tItemPoint.col === gridPoint.col && tItemPoint.row > gridPoint.row;
+	    });
+	    return tArr;
+	  };
+	  this.getThingsLeft = function (gridPoint, thingsArr) {
+	    var tArr = thingsArr.filter(function (tItem) {
+	      var tItemPoint = tItem.getGridPoint();
+	      return tItemPoint.row === gridPoint.row && tItemPoint.col < gridPoint.col;
+	    });
+	    return tArr;
+	  };
+	  this.getThingsRight = function (gridPoint, thingsArr) {
+	    var tArr = thingsArr.filter(function (tItem) {
+	      var tItemPoint = tItem.getGridPoint();
+	      return tItemPoint.row === gridPoint.row && tItemPoint.col > gridPoint.col;
+	    });
+	    return tArr;
+	  };
+	
 	  this.isAnyPositionFree = function () {
 	    return maxCols * maxRows > _numReserved;
+	  };
+	
+	  this.isPosFree = function (pos) {
+	    var row = _gridRows[pos.row];
+	    var gridElement = row[pos.col];
+	    return !gridElement;
 	  };
 	
 	  // accepts input col and row as a starting point
@@ -52571,6 +52780,10 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+	
+	// import {p, pm} from './main.js';
+	
 	var ThingMgr = function ThingMgr() {
 	
 	  var _self = this;
@@ -52586,6 +52799,9 @@
 	  this.paused;
 	  this.frameJumpFactor;
 	  var _moveSomethingAt;
+	  var _moveMultipleThingsAt;
+	  var _waitingToMoveMultipleThings;
+	  var _isMovingMultipleThings;
 	
 	  this.init = function (p0, pm0) {
 	    p = p || p0;
@@ -52599,6 +52815,9 @@
 	    this.paused = false;
 	    this.frameJumpFactor = 0;
 	    _moveSomethingAt = p.millis() + p.random(5000);
+	    _moveMultipleThingsAt = p.millis() + p.random(5000);
+	    _waitingToMoveMultipleThings = false;
+	    _isMovingMultipleThings = false;
 	
 	    pm.clearAllReservedPos();
 	  };
@@ -52609,6 +52828,86 @@
 	      pm.reservePos(t.getGridPoint(), t);
 	      _thingArr.push(t);
 	    }
+	  };
+	
+	  var _pickThing = function _pickThing() {
+	    var notMovingThingsArr = _thingArr.filter(function (thing) {
+	      return !thing.isMoving();
+	    });
+	    if (notMovingThingsArr.length === 0) {
+	      return;
+	    }
+	    var i = p.floor(p.random(notMovingThingsArr.length));
+	    var t = notMovingThingsArr[i];
+	    return t;
+	  };
+	
+	  var _findThingsWithFreeAdjacentSpace = function _findThingsWithFreeAdjacentSpace() {
+	    var thingsWithAdjacentSpace = _thingArr.filter(function (thing) {
+	      return pm.getAdjacentFreeDirections(thing.getGridPoint()) !== null;
+	    });
+	    return thingsWithAdjacentSpace;
+	  };
+	
+	  var _moveMultipleThings = function _moveMultipleThings() {
+	    var thingsToMoveInfo = _pickMultipleThings();
+	    if (!thingsToMoveInfo) {
+	      return Promise.reject();
+	    }
+	    var thingsToMoveArr = thingsToMoveInfo.things;
+	    var dir = thingsToMoveInfo.dir;
+	    var pArr = [];
+	    var dur = 1000;
+	    thingsToMoveArr.forEach(function (thing) {
+	      pm.clearReservedPos(thing.getGridPoint());
+	    });
+	    thingsToMoveArr.forEach(function (thing) {
+	      pArr.push(thing.moveInSpecifiedDirection(dir, dur));
+	    });
+	    var p = Promise.all(pArr);
+	    return p;
+	  };
+	
+	  // returns things array and direction e.g. {things: [t1,t2], dir: UP}
+	  var _pickMultipleThings = function _pickMultipleThings() {
+	
+	    if (p.random(10) < 10) {
+	
+	      var tArr = _findThingsWithFreeAdjacentSpace();
+	      if (tArr.length === 0) {
+	        return null;
+	      }
+	      var r = p.floor(p.random(tArr.length));
+	      var thing = tArr[r];
+	      var adjacentDirections = pm.getAdjacentFreeDirections(thing.getGridPoint());
+	      if (!adjacentDirections) {
+	        console.log('!!!!!!!!!!!');
+	        return;
+	      }
+	      var rDirIndex = p.floor(p.random(adjacentDirections.length));
+	      var rDir = adjacentDirections[rDirIndex];
+	      var gridPointFreeSpace = pm.getGridPointPlusDirection(thing.getGridPoint(), rDir);
+	      var gridPointsFreeNearby = pm.getGridPointsNearbyPerpendicularToDirection(gridPointFreeSpace, rDir);
+	      var freeGridPointsGivenDirectionArr = [gridPointFreeSpace];
+	      if (gridPointsFreeNearby.length > 0) {
+	        freeGridPointsGivenDirectionArr.push.apply(freeGridPointsGivenDirectionArr, _toConsumableArray(gridPointsFreeNearby));
+	      }
+	
+	      var thingsToMoveArr = [];
+	      freeGridPointsGivenDirectionArr.forEach(function (gridPointFree) {
+	        var otherThings = pm.getOtherThingsToMoveInSpecifiedDirection(gridPointFree, rDir, _thingArr);
+	        thingsToMoveArr.push.apply(thingsToMoveArr, _toConsumableArray(otherThings));
+	      });
+	    } else {
+	
+	      // find things to move by first locating adjacent rows of blank spaces
+	
+	    }
+	
+	    return {
+	      things: thingsToMoveArr,
+	      dir: rDir
+	    };
 	  };
 	
 	  this.update = function () {
@@ -52627,17 +52926,61 @@
 	        _clockHiddenDelta = 0;
 	      }
 	    }
-	    if (p.millis() > _moveSomethingAt) {
-	      if (_thingArr.length < 1) {
-	        console.log('nothing to move');
-	      } else {
-	        var i = p.floor(p.random(_thingArr.length));
-	        var t = _thingArr[i];
-	        var delay = p.random(10000);
-	        t.move(delay);
+	
+	    if (!_isMovingMultipleThings) {
+	
+	      if (!_waitingToMoveMultipleThings) {
+	
+	        if (p.millis() > _moveSomethingAt) {
+	          if (_thingArr.length < 1) {
+	            console.log('nothing to move');
+	          } else {
+	            var t = _pickThing();
+	            if (t) {
+	              var delay = p.random(10000);
+	              t.move(delay);
+	            }
+	          }
+	          _moveSomethingAt = p.millis() + p.random(5000);
+	        }
+	
+	        if (p.millis() > _moveMultipleThingsAt) {
+	          if (_thingArr.length < 1) {
+	            console.log('nothing to move');
+	          } else {
+	            _waitingToMoveMultipleThings = true;
+	          }
+	        }
 	      }
-	      _moveSomethingAt = p.millis() + p.random(5000);
+	
+	      if (_waitingToMoveMultipleThings) {
+	
+	        var movingThingsArr = _thingArr.filter(function (thing) {
+	          return thing.isMoving();
+	        });
+	        if (movingThingsArr.length === 0) {
+	          _waitingToMoveMultipleThings = false;
+	          _isMovingMultipleThings = true;
+	
+	          console.log('move multiple things now...');
+	          // pick some things that are next to a vacant space
+	          // then move them all at once with the same duration
+	          _moveMultipleThings().then(function (thingsMovedArr) {
+	            console.log('moved multiple things');
+	            if (p.random(10) < 5) {
+	              return _moveMultipleThings();
+	            }
+	          }).catch(function (err) {
+	            console.log('Catch Error moving things: ' + err);
+	          }).then(function () {
+	            console.log('moved multiple things DONE');
+	            _isMovingMultipleThings = false;
+	            _moveMultipleThingsAt = p.millis() + p.random(5000, 6000);
+	          });
+	        }
+	      }
 	    }
+	
 	    _thingArr.forEach(function (thing) {
 	      thing.update();
 	    });
@@ -52689,6 +53032,13 @@
 	      t.move(delay);
 	    }
 	  };
+	
+	  this.peakDetected = function () {
+	    var t = _pickThing();
+	    var delay = 0;
+	    var onlyRotate = true;
+	    t.move(0, 1000, onlyRotate, _tween2.default.Easing.Cubic.Out);
+	  };
 	};
 	
 	exports.default = new ThingMgr();
@@ -52719,9 +53069,9 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	// import {p, pm} from './main.js';
+	
 	// import 'p5' from 'p5;'
-	
-	
 	var Thing = function Thing(p, pm) {
 	  var _self = this;
 	  //var _color;
@@ -52762,6 +53112,10 @@
 	    return _isInitialized;
 	  };
 	
+	  this.isMoving = function () {
+	    return _isMoving;
+	  };
+	
 	  this.getColor = function () {
 	    return _attr.color;
 	  };
@@ -52791,7 +53145,7 @@
 	        if (_attr.flashColor) {
 	          p.fill(_attr.color);
 	        } else {
-	          p.fill(255, 0, 0);
+	          p.fill(ColorMgr.movingColor);
 	        }
 	      }
 	    }
@@ -52816,7 +53170,37 @@
 	    return _isMoving;
 	  };
 	
-	  this.move = function (delay) {
+	  //<<<TODO:fix below to clear/reserve positions in the grid like how move() does
+	  // returns a promise that will resolve when move completed
+	  this.moveInSpecifiedDirection = function (dir, dur) {
+	    _isMoving = true;
+	    _tweenPos = undefined;
+	    var newPos = { row: _pos.row, col: _pos.col };
+	    if (dir === pm.Directions.UP) {
+	      newPos.row -= 1;
+	    } else if (dir === pm.Directions.DOWN) {
+	      newPos.row += 1;
+	    } else if (dir === pm.Directions.LEFT) {
+	      newPos.col -= 1;
+	    } else if (dir === pm.Directions.RIGHT) {
+	      newPos.col += 1;
+	    }
+	    pm.reservePos(newPos, _self);
+	    var easing = _tween2.default.Easing.Cubic.InOut;
+	    var p = new Promise(function (resolve, reject) {
+	      _tweenPos = new _tween2.default.Tween(_pos).easing(easing).to({ col: newPos.col, row: newPos.row }, dur).onStart(function () {
+	        _inTransit = true;
+	      }).onComplete(function () {
+	        _inTransit = false;
+	        _isMoving = false;
+	        _SoundMgr2.default.playBlip1();
+	        resolve(_self);
+	      }).start();
+	    });
+	    return p;
+	  };
+	
+	  this.move = function (delay, duration, onlyRotate, easing) {
 	    if (_isMoving) {
 	      return; // ignore move request
 	    }
@@ -52826,7 +53210,7 @@
 	    _isMoving = true;
 	    _onlyRotate = false;
 	
-	    if (pm.isAnyPositionFree()) {
+	    if (!onlyRotate && pm.isAnyPositionFree()) {
 	      if (p.random(10) < 1.8) {
 	        _onlyRotate = true;
 	      } else {
@@ -52856,7 +53240,7 @@
 	        newPos = { row: _pos.row, col: _pos.col };
 	      }
 	
-	      dur = p.floor(p.random(1000, 3000));
+	      dur = duration || p.floor(p.random(1000, 3000));
 	      newAngle = newPos.freeAngleAtPos === undefined ? _getNewAngle() : newPos.freeAngleAtPos;
 	      if (!_onlyRotate) {
 	        pm.reservePos(newPos, _self);
@@ -52872,14 +53256,15 @@
 	      }
 	
 	      _tweenPos = undefined;
+	      easing = easing || _tween2.default.Easing.Cubic.InOut;
 	      if (!_onlyRotate) {
-	        _tweenPos = new _tween2.default.Tween(_pos).easing(_tween2.default.Easing.Cubic.InOut).to({ col: newPos.col, row: newPos.row }, dur).onStart(function () {
+	        _tweenPos = new _tween2.default.Tween(_pos).easing(easing).to({ col: newPos.col, row: newPos.row }, dur).onStart(function () {
 	          _inTransit = true;
 	        }).onComplete(function () {
 	          _inTransit = false;
 	        });
 	      }
-	      _tweenAngle = new _tween2.default.Tween(_attr).easing(_tween2.default.Easing.Cubic.InOut).to({ rotationAngle: newAngle }, dur).onComplete(function () {
+	      _tweenAngle = new _tween2.default.Tween(_attr).easing(easing).to({ rotationAngle: newAngle }, dur).onComplete(function () {
 	        _justStopped = true;
 	        _attr.stopTriangleAlpha = 255;
 	        var tweenToRegularColor = new _tween2.default.Tween(_attr).easing(_tween2.default.Easing.Cubic.Out).to({ stopTriangleAlpha: 0 }, 500).onComplete(function () {
@@ -52887,6 +53272,7 @@
 	        }).start();
 	        _stationaryAngle = _attr.rotationAngle;
 	        _isMoving = false;
+	        _onlyRotate = false;
 	        _SoundMgr2.default.playBlip1();
 	      });
 	      if (_tweenPos) {
@@ -52913,11 +53299,14 @@
 	
 	var _p2 = _interopRequireDefault(_p);
 	
-	__webpack_require__(292);
-	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	// import 'p5/lib/addons/p5.sound.js';
+	// import {p} from './main.js';
+	
 	var SoundMgr = function () {
+	
+	  var p;
 	
 	  var _blipSounds = [];
 	  var _altBlipSounds = [];
@@ -52925,7 +53314,8 @@
 	  var _volume;
 	  var _soundMode = 0;
 	
-	  var _init = function _init() {
+	  var _init = function _init(p0) {
+	    p = p0;
 	    _muteOn = false;
 	    _volume = 1;
 	    _blipSounds.push(new _p2.default.SoundFile('Blip_Select7.wav'));
@@ -52962,6 +53352,12 @@
 	      blip1.setVolume(_volume);
 	      blip1.play();
 	    }
+	
+	    //main.test1();
+	    // console.log('myp5.PI = '+p.PI);
+	    // p.noStroke();
+	    // p.fill(255,0,0);
+	    // p.rect(100,100,100,100);
 	  };
 	
 	  var _mute = function _mute(muteOn) {
