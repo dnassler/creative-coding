@@ -64,22 +64,49 @@
 	
 	//--
 	//--
-	// var sketch = function( p ) {
-	//   p.preload = function() {
-	//
-	//   };
-	//   p.setup = function() {
-	//     //p.createCanvas(700, 410);
-	//     p.noLoop();
-	//   };
-	//
-	//   p.draw = function() {
-	//     p.background(0);
-	//     p.fill(255);
-	//     p.rect(x,y,50,50);
-	//   };
-	// };
-	// var myp5 = new p5(sketch);
+	var pg;
+	
+	var sketch = function sketch(p) {
+	
+	  var x = 0,
+	      y = 0;
+	
+	  p.preload = function () {};
+	
+	  p.setup = function () {
+	    //p.createCanvas(700, 410);
+	    p.noCanvas();
+	    pg = p.createGraphics(1024, 1024);
+	    //pg.background(160,173,175);
+	    p.noLoop();
+	    pg.rectMode(p.CENTER);
+	    init();
+	    animate();
+	  };
+	
+	  p.draw = function () {
+	    pg.push();
+	    pg.translate(pg.width / 2, pg.height / 2);
+	    pg.background(160, 173, 175);
+	    //pg.clear();
+	    // pg.fill(200,100,0);
+	    // pg.noStroke();
+	    // pg.rect(x,y,10,pg.height);
+	    // x += 10;
+	    // if ( x > pg.width/2 ) {
+	    //   x = -pg.width/2;
+	    // } else if ( x < -pg.width/2 ) {
+	    //   x = pg.width/2;
+	    // }
+	    // if ( y > pg.height/2 ) {
+	    //   y = -pg.height/2;
+	    // } else if ( y < -pg.height/2 ) {
+	    //   y = pg.height/2;
+	    // }
+	    pg.pop();
+	  };
+	};
+	var myp5 = new _p2.default(sketch);
 	//--
 	//--
 	
@@ -87,14 +114,18 @@
 	var light, ambLight;
 	var controlAttr, gui, stats;
 	var ocontrols;
-	var ground;
+	var ground, groundTexture;
+	var skyBox;
 	
 	var light1, light4;
 	
 	var shapeArr = [];
 	function Shape(mesh) {
+	  this.mesh = mesh;
 	  var shapeSpaceWidth = 300;
 	  var shapeSpaceHeight = 500;
+	  var tween;
+	  var tweenRotate;
 	  function _move() {
 	    var newPos = mesh.position.clone();
 	    if (Math.random() < 0.5) {
@@ -103,18 +134,23 @@
 	      newPos.z = (Math.random() - 0.5) * shapeSpaceHeight;
 	    }
 	
-	    var dur = Math.random() * 10000 + 1000;
+	    var dur = Math.random() * 10000 + 4000;
 	    var delayDur = Math.random() * 10000;
-	    var tween = new _tween2.default.Tween(mesh.position).delay(delayDur).easing(_tween2.default.Easing.Cubic.InOut).to({ x: newPos.x, z: newPos.z }, dur).onComplete(function () {
+	    tween = new _tween2.default.Tween(mesh.position).delay(delayDur).easing(_tween2.default.Easing.Cubic.InOut).to({ x: newPos.x, z: newPos.z }, dur).onComplete(function () {
 	      _move();
 	    });
 	    var newRotationX = (Math.random() - 0.5) * (Math.PI * 4);
-	    var tweenRotate = new _tween2.default.Tween(mesh.rotation).delay(delayDur).easing(_tween2.default.Easing.Cubic.InOut).to({ y: newRotationX }, dur);
+	    tweenRotate = new _tween2.default.Tween(mesh.rotation).delay(delayDur).easing(_tween2.default.Easing.Cubic.InOut).to({ y: newRotationX }, dur);
 	
 	    tween.start();
 	    tweenRotate.start();
 	  }
 	  _move();
+	
+	  this.kill = function () {
+	    tween.stop();
+	    tweenRotate.stop();
+	  };
 	}
 	
 	function init() {
@@ -131,8 +167,17 @@
 	    this.intensityLight4 = 3.5;
 	    this.shadowBiasLight4 = 0.5;
 	    this.distanceLight4 = 600;
+	    this.light4y = 100;
+	    this.light4x = 0;
+	    this.light4z = 0;
 	    this.showStarField = true;
 	    this.starFieldRotationSpeed = -1;
+	    this.addShapes = function () {
+	      addShapes(2);
+	    };
+	    this.killShape = function () {
+	      killShapes(1);
+	    };
 	    this.changeCameraViewPoint = function () {
 	      nextCameraPos();
 	    };
@@ -153,11 +198,22 @@
 	  gui.add(controlAttr, 'distanceLight4', 0, 1000).onChange(function (v) {
 	    light4.distance = v;
 	  });
+	  gui.add(controlAttr, 'light4y', 0, 200).onChange(function (v) {
+	    light4.position.y = v;
+	  });
+	  gui.add(controlAttr, 'light4x', -200, 200).onChange(function (v) {
+	    light4.position.x = v;
+	  });
+	  gui.add(controlAttr, 'light4z', -200, 200).onChange(function (v) {
+	    light4.position.z = v;
+	  });
 	  gui.add(controlAttr, 'showStarField').onChange(function (v) {
 	    skyBox.visible = !skyBox.visible;
 	  });
 	  gui.add(controlAttr, 'starFieldRotationSpeed', -10, 10);
 	  gui.add(controlAttr, 'changeCameraViewPoint');
+	  gui.add(controlAttr, 'addShapes');
+	  gui.add(controlAttr, 'killShape');
 	
 	  // camera.position.set(-309.1,25.134,-446.843);
 	  camera.zoom = 1;
@@ -190,7 +246,14 @@
 	    texture.needsUpdate = true;
 	    return texture;
 	  };
-	  var groundTexture = getGroundTexture(1024, 1024);
+	  var getGroundTexture2 = function getGroundTexture2() {
+	    var c = pg._renderer.canvas;
+	    var texture = new THREE.Texture(c);
+	    texture.needsUpdate = true;
+	    return texture;
+	  };
+	  groundTexture = getGroundTexture2();
+	  // groundTexture = getGroundTexture(1024,1024);
 	  // starTexture.wrapS = THREE.RepeatWrapping;
 	  // starTexture.wrapT = THREE.RepeatWrapping;
 	  // starTexture.repeat.set( 4, 4 );
@@ -207,7 +270,7 @@
 	    specular: 0xffffff,
 	    shading: THREE.SmoothShading,
 	    map: groundTexture,
-	    transparent: false,
+	    transparent: true,
 	    opacity: 1 //,
 	    //blending: THREE.MultiplyBlending
 	  });
@@ -230,7 +293,7 @@
 	  // ---
 	
 	  function addShapes(numShapes) {
-	    var size = 1;
+	    var size = 3;
 	    var geometry = new THREE.CylinderGeometry(0, 10, 30 * size, 4, 1);
 	    var material = new THREE.MeshPhongMaterial({
 	      shininess: 150,
@@ -256,10 +319,18 @@
 	  }
 	  addShapes(2);
 	
+	  function killShapes(numShapes) {
+	    for (var i = 0; i < numShapes; i++) {
+	      var shape = shapeArr.pop();
+	      shape.kill();
+	      scene.remove(shape.mesh);
+	    }
+	  }
+	
 	  var sphere = new THREE.SphereGeometry(10, 16, 8);
 	
 	  light1 = new THREE.DirectionalLight(0xffffff, controlAttr.intensityLight1);
-	  light1.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
+	  //light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
 	  light1.position.set(0, 100, 0); //.normalize();
 	  scene.add(light1);
 	  // light1.intensity = 0; // to make the light not be visible
@@ -281,7 +352,7 @@
 	  light4.shadowMapHeight = 1024;
 	  var sphere = new THREE.SphereGeometry(10, 16, 8);
 	  light4.add(new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffffff })));
-	  light4.position.set(0, 100, 0);
+	  light4.position.set(controlAttr.light4x, controlAttr.light4y, controlAttr.light4z);
 	  scene.add(light4);
 	  light4.target = ground;
 	
@@ -334,7 +405,7 @@
 	    fragmentShader: document.getElementById('sky-fragment').textContent
 	  });
 	
-	  var skyBox = new THREE.Mesh(geometry, material);
+	  skyBox = new THREE.Mesh(geometry, material);
 	  skyBox.scale.set(-1, 1, 1);
 	  skyBox.eulerOrder = 'XZY';
 	  skyBox.renderDepth = 1000.0;
@@ -376,13 +447,15 @@
 	  }
 	};
 	
-	init();
-	animate();
+	// init();
+	// animate();
 	
 	function animate() {
 	  requestAnimationFrame(animate);
+	  updateObjects();
 	  ocontrols.update();
 	  _tween2.default.update();
+	  groundTexture.needsUpdate = true;
 	  render();
 	}
 	
@@ -396,6 +469,10 @@
 	  camera.updateProjectionMatrix();
 	  renderer.setSize(window.innerWidth, window.innerHeight);
 	}
+	
+	function updateObjects() {
+	  skyBox.rotation.x += 0.001 * controlAttr.starFieldRotationSpeed;
+	};
 
 /***/ },
 /* 1 */
