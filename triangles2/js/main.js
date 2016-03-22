@@ -10,10 +10,12 @@ import PositionMgr from './PositionMgr';
 import ThingMgr from './ThingMgr';
 import SoundMgr from './SoundMgr';
 
-var cm, pm, tm;
-var sm;
-
 var sketch = function( p ) {
+
+  //var socket;
+
+  var cm, pm, tm;
+  var sm;
 
   var controlAttr;
   var stats;
@@ -35,6 +37,29 @@ var sketch = function( p ) {
 
     // audioIn = new p5.AudioIn();
     // audioIn.start();
+
+    // socket = io.connect('https://whispering-atoll-45779.herokuapp.com');
+    //
+    // p.mouseDragged = function() {
+    //   // Make a little object with mouseX and mouseY
+    //   var data = {
+    //     x: p.mouseX,
+    //     y: p.mouseY
+    //   };
+    //   // Send that object to the socket
+    //   socket.emit('mouse',data);
+    // };
+    //
+    // // We make a named event called 'mouse' and write an
+    // // anonymous callback function
+    // socket.on('mouse',
+    //   function(data) {
+    //     // Draw a blue circle
+    //     p.fill(0,0,255);
+    //     p.noStroke();
+    //     p.ellipse(data.x,data.y,80,80);
+    //   }
+    // );
 
     ColorMgr.init(p);
 
@@ -251,7 +276,6 @@ var sketch = function( p ) {
     stats.update();
   };
 
+
 };
 var myp5 = new p5(sketch);
-
-export { myp5 as p, pm };
