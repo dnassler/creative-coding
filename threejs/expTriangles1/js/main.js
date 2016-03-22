@@ -64,8 +64,11 @@ var light1, light4;
 
 var shapeArr = [];
 function Shape( mesh ) {
+  this.mesh = mesh;
   var shapeSpaceWidth = 300;
   var shapeSpaceHeight = 500;
+  var tween;
+  var tweenRotate;
   function _move() {
     var newPos = mesh.position.clone();
     if ( Math.random() < 0.5 ) {
@@ -74,9 +77,9 @@ function Shape( mesh ) {
       newPos.z = (Math.random()-0.5) * shapeSpaceHeight;
     }
 
-    var dur = Math.random()*10000+1000;
+    var dur = Math.random()*10000+4000;
     var delayDur = Math.random()*10000;
-    var tween = new TWEEN.Tween( mesh.position )
+    tween = new TWEEN.Tween( mesh.position )
       .delay(delayDur)
       .easing(TWEEN.Easing.Cubic.InOut)
       .to({ x: newPos.x, z: newPos.z }, dur)
@@ -84,7 +87,7 @@ function Shape( mesh ) {
         _move();
       });
     var newRotationX = (Math.random()-0.5)*(Math.PI*4);
-    var tweenRotate = new TWEEN.Tween( mesh.rotation )
+    tweenRotate = new TWEEN.Tween( mesh.rotation )
       .delay(delayDur)
       .easing(TWEEN.Easing.Cubic.InOut)
       .to({ y: newRotationX }, dur );
@@ -93,6 +96,11 @@ function Shape( mesh ) {
     tweenRotate.start();
   }
   _move();
+
+  this.kill = function() {
+    tween.stop();
+    tweenRotate.stop();
+  };
 }
 
 function init() {
@@ -109,8 +117,17 @@ function init() {
     this.intensityLight4 = 3.5;
     this.shadowBiasLight4 = 0.5;
     this.distanceLight4 = 600;
+    this.light4y = 100;
+    this.light4x = 0;
+    this.light4z = 0;
     this.showStarField = true;
     this.starFieldRotationSpeed = -1;
+    this.addShapes = function() {
+      addShapes(2);
+    };
+    this.killShape = function() {
+      killShapes(1);
+    };
     this.changeCameraViewPoint = function() {
       nextCameraPos();
     };
@@ -121,9 +138,14 @@ function init() {
   gui.add( controlAttr, 'intensityLight4', 0, 10 ).onChange(function(v){ light4.intensity = v; });
   gui.add( controlAttr, 'shadowBiasLight4', 0, 2 ).onChange(function(v){ light4.shadowBias = v; });
   gui.add( controlAttr, 'distanceLight4', 0, 1000 ).onChange(function(v){ light4.distance = v;});
+  gui.add( controlAttr, 'light4y', 0, 200 ).onChange(function(v){ light4.position.y = v;});
+  gui.add( controlAttr, 'light4x', -200, 200 ).onChange(function(v){ light4.position.x = v;});
+  gui.add( controlAttr, 'light4z', -200, 200 ).onChange(function(v){ light4.position.z = v;});
   gui.add( controlAttr, 'showStarField' ).onChange(function(v){ skyBox.visible = !skyBox.visible; });
   gui.add( controlAttr, 'starFieldRotationSpeed', -10, 10 );
   gui.add( controlAttr, 'changeCameraViewPoint' );
+  gui.add( controlAttr, 'addShapes' );
+  gui.add( controlAttr, 'killShape' );
 
 
   // camera.position.set(-309.1,25.134,-446.843);
@@ -205,7 +227,7 @@ function init() {
 
 
   function addShapes( numShapes ){
-    var size = 1;
+    var size = 3;
     var geometry = new THREE.CylinderGeometry( 0, 10, 30*size, 4, 1 );
     var material =  new THREE.MeshPhongMaterial( {
       shininess: 150,
@@ -233,10 +255,18 @@ function init() {
   }
   addShapes(2);
 
+  function killShapes( numShapes ) {
+    for (var i=0; i < numShapes; i++) {
+      var shape = shapeArr.pop();
+      shape.kill();
+      scene.remove( shape.mesh );
+    }
+  }
+
   var sphere = new THREE.SphereGeometry( 10, 16, 8 );
 
   light1 = new THREE.DirectionalLight( 0xffffff, controlAttr.intensityLight1 );
-  light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+  //light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
   light1.position.set( 0, 100, 0 );//.normalize();
   scene.add( light1 );
   // light1.intensity = 0; // to make the light not be visible
@@ -258,7 +288,7 @@ function init() {
   light4.shadowMapHeight = 1024;
   var sphere = new THREE.SphereGeometry( 10, 16, 8 );
   light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
-  light4.position.set(0,100,0);
+  light4.position.set(controlAttr.light4x,controlAttr.light4y,controlAttr.light4z);
   scene.add( light4 );
   light4.target = ground;
 
