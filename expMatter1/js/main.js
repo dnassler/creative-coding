@@ -21,7 +21,12 @@ var sketch = function( p ) {
     //p.noLoop();
 
     controlAttr = new function () {
-      this.numBox = 4;
+      this.numBox = 8;
+
+      this.frictionAir = 0.00001;
+      this.friction = 0.0001;
+      this.restitution = 0.6;
+
       this.resetThingPos = function() {
         Scene.resetThingPos();
       };
@@ -33,7 +38,10 @@ var sketch = function( p ) {
       // };
     };
     var gui = new dat.GUI();
-    gui.add( controlAttr, 'numBox', 1, 10 );
+    gui.add( controlAttr, 'numBox', 1, 10 ).step(1);
+    gui.add( controlAttr, 'frictionAir', 0, 1 );
+    gui.add( controlAttr, 'friction', 0, 1);
+    gui.add( controlAttr, 'restitution', 0, 1);
     gui.add( controlAttr, 'resetThingPos' );
     gui.add( controlAttr, 'resetWorld' );
     // gui.add( controlAttr, 'resetScene' );

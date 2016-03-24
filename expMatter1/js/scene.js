@@ -17,11 +17,17 @@ var pg;
 
 var controlAttr;
 
-
+var bodyOptions;
 
 function init(pIn, controlAttrIn) {
   p = pIn;
   controlAttr = controlAttrIn;
+
+  bodyOptions = {
+      frictionAir: controlAttr.frictionAir,
+      friction: controlAttr.friction,
+      restitution: controlAttr.restitution
+  };
 
   // create a Matter.js engine
   //var engine = Engine.create(document.body);
@@ -36,12 +42,11 @@ function init(pIn, controlAttrIn) {
   Engine.run(engine);
 }
 
-var bodyOptions = {
-    frictionAir: 0,
-    friction: 0.0001,
-    //angle:1,
-    restitution: 0.5
-};
+// var bodyOptions = {
+//     frictionAir: 0,
+//     friction: 0.0001,
+//     restitution: 1
+// };
 
 function Thing() {
   var MIN_WIDTH = p.width/10;
@@ -66,11 +71,12 @@ function Thing() {
 
   this.resetPos = function() {
     _self.x = p.random(p.width);
-    _self.y = p.random(p.height*0.8);
+    _self.y = p.random(-p.height*4);
 
     Body.setPosition( _self.body, {x:_self.x, y:_self.y});
     Body.rotate(_self.body, p.random(-p.PI,p.PI));
   };
+  _self.resetPos();
 
   this.update = function(){
     _self.x = _self.body.position.x;
@@ -99,11 +105,11 @@ function resetWorld() {
   things = [];
   bodies = [];
 
-  var ground = Bodies.rectangle(p.width/2, p.height, p.width, 10, { isStatic: true });
+  var ground = Bodies.rectangle(p.width/2, p.height, p.width*1.5, 10, { isStatic: true });
   bodies.push(ground);
 
-  var wallLeft = Bodies.rectangle(0,p.height/2,10,p.height+20, { isStatic: true });
-  var wallRight = Bodies.rectangle(p.width,p.height/2,10,p.height+20, { isStatic: true });
+  var wallLeft = Bodies.rectangle(-p.width/4,p.height/2,10,p.height+20, { isStatic: true });
+  var wallRight = Bodies.rectangle(p.width*1.25,p.height/2,10,p.height+20, { isStatic: true });
   bodies.push( wallLeft );
   bodies.push( wallRight );
 
