@@ -36,7 +36,7 @@ var sketch = function( p ) {
       this.resetWorld = function() {
         Scene.resetWorld();
       };
-      this.isMuted = true;
+      this.isMuted = false;
       this.soundMode = SoundMgr.MODE_NOISE;
       this.saveCanvas = function() {
         p.save('blackandwhiteblocks.png');

@@ -24,7 +24,7 @@ function init(pIn, controlAttrIn) {
 
   pulse = new p5.Pulse();
   pulse.amp(0.5);
-  pulse.freq(110);
+  pulse.freq(55);
   pulse.width(0.5);
   pulse.amp(0);
   pulse.start();
@@ -60,6 +60,7 @@ function playSound() {
   if ( soundMode === MODE_NOISE ) {
     env.play(noise);
   } else {
+    pulse.width(p.random(1));
     env2.play(pulse);
   }
 }
