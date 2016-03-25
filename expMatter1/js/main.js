@@ -37,6 +37,7 @@ var sketch = function( p ) {
         Scene.resetWorld();
       };
       this.isMuted = true;
+      this.soundMode = SoundMgr.MODE_NOISE;
       this.saveCanvas = function() {
         p.save('blackandwhiteblocks.png');
       };
@@ -54,6 +55,10 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'isMuted' ).onChange(function(v){
       console.log('isMuted flag being set to '+v);
       SoundMgr.setMute( v );
+    });
+    gui.add( controlAttr, 'soundMode', 1, 2 ).step(1).onChange(function(v){
+      console.log('soundMode being set to '+v);
+      SoundMgr.setSoundMode( v );
     });
     gui.add( controlAttr, 'saveCanvas' );
     // gui.add( controlAttr, 'resetScene' );
