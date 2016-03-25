@@ -33,6 +33,9 @@ var sketch = function( p ) {
       this.resetWorld = function() {
         Scene.resetWorld();
       };
+      this.saveCanvas = function() {
+        p.save('blackandwhiteblocks.png');
+      };
       // this.resetScene = function() {
       //   p.redraw();
       // };
@@ -44,6 +47,7 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'restitution', 0, 1);
     gui.add( controlAttr, 'resetThingPos' );
     gui.add( controlAttr, 'resetWorld' );
+    gui.add( controlAttr, 'saveCanvas' );
     // gui.add( controlAttr, 'resetScene' );
 
     stats = new Stats();

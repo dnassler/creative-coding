@@ -96,6 +96,9 @@
 	      this.resetWorld = function () {
 	        Scene.resetWorld();
 	      };
+	      this.saveCanvas = function () {
+	        p.save('blackandwhiteblocks.png');
+	      };
 	      // this.resetScene = function() {
 	      //   p.redraw();
 	      // };
@@ -107,6 +110,7 @@
 	    gui.add(controlAttr, 'restitution', 0, 1);
 	    gui.add(controlAttr, 'resetThingPos');
 	    gui.add(controlAttr, 'resetWorld');
+	    gui.add(controlAttr, 'saveCanvas');
 	    // gui.add( controlAttr, 'resetScene' );
 	
 	    stats = new _stats2.default();
@@ -43168,6 +43172,10 @@
 	
 	var bodyOptions;
 	
+	var timeScaleTarget;
+	var timeToChangeTimeScale;
+	var timeToResetWorld;
+	
 	function init(pIn, controlAttrIn) {
 	  p = pIn;
 	  controlAttr = controlAttrIn;
@@ -43186,6 +43194,10 @@
 	
 	  bgColor = p.color('#aaa');
 	  pg = p.createGraphics(p.width, p.height);
+	
+	  timeScaleTarget = 1;
+	  timeToChangeTimeScale = p.millis() + p.random(5000, 15000);
+	  timeToResetWorld = p.millis() + p.random(3000, 15000);
 	
 	  // run the engine
 	  Engine.run(engine);
@@ -43220,7 +43232,7 @@
 	
 	  this.resetPos = function () {
 	    _self.x = p.random(p.width);
-	    _self.y = p.random(-p.height * 4);
+	    _self.y = p.random(-p.height * 4 - p.height / 2);
 	
 	    Body.setPosition(_self.body, { x: _self.x, y: _self.y });
 	    Body.rotate(_self.body, p.random(-p.PI, p.PI));
@@ -43289,6 +43301,34 @@
 	}
 	
 	function update() {
+	  if (timeToChangeTimeScale < p.millis()) {
+	    if (engine.timing.timeScale < 0.1) {
+	      if (p.random(10) < 1) {
+	        engine.timing.timeScale = 0.5;
+	      } else {
+	        engine.timing.timeScale = 1;
+	      }
+	    } else if (engine.timing.timeScale > 0.9) {
+	      if (p.random(10) < 1) {
+	        engine.timing.timeScale = 0.5;
+	      } else {
+	        engine.timing.timeScale = 0.05;
+	      }
+	    } else {
+	      if (p.random(10) < 5) {
+	        engine.timing.timeScale = 0.05;
+	      } else {
+	        engine.timing.timeScale = 1;
+	      }
+	    }
+	    timeToChangeTimeScale = p.millis() + p.random(2000, 6000);
+	  }
+	  if (timeToResetWorld < p.millis()) {
+	    resetWorld();
+	    timeToResetWorld = p.millis() + p.random(8000, 40000);
+	  }
+	  //engine.timing.timeScale += (timeScaleTarget - engine.timing.timeScale) * 0.001;
+	
 	  things.forEach(function (thing) {
 	    thing.update();
 	  });
