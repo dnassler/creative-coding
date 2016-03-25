@@ -1,16 +1,20 @@
 import Matter from 'matter-js';
 
+import * as SoundMgr from './soundMgr.js';
+
 // Matter.js module aliases
 var Engine = Matter.Engine,
     World = Matter.World,
     Bodies = Matter.Bodies,
-    Body = Matter.Body;
+    Body = Matter.Body,
+    Events = Matter.Events;
 
 var p; // holds reference to the p5 sketch object
 
 var engine;
 var bodies;
 var things;
+var ground;
 
 var bgColor;
 var pg;
@@ -23,6 +27,8 @@ var timeScaleTarget;
 var timeToChangeTimeScale;
 var timeToResetWorld;
 
+var sceneEvents;
+var hitGroundCount;
 
 function init(pIn, controlAttrIn) {
   p = pIn;
@@ -37,6 +43,28 @@ function init(pIn, controlAttrIn) {
   // create a Matter.js engine
   //var engine = Engine.create(document.body);
   engine = Engine.create();
+
+  sceneEvents = [];
+
+  sceneEvents.push(
+
+    Events.on(engine, 'collisionStart', function(event) {
+      var pairs = event.pairs;
+      for (var i = 0; i < pairs.length; i++) {
+          var pair = pairs[i];
+          if ( pair.bodyA === ground || pair.bodyB === ground ) {
+            console.log('hit ground');
+            hitGroundCount += 1;
+            if ( hitGroundCount < 10 ) {
+              SoundMgr.playSound();
+            }
+          }
+          // pair.bodyA.render.fillStyle = '#bbbbbb';
+          // pair.bodyB.render.fillStyle = '#bbbbbb';
+      }
+    })
+
+  );
 
   resetWorld();
 
@@ -114,7 +142,7 @@ function resetWorld() {
   things = [];
   bodies = [];
 
-  var ground = Bodies.rectangle(p.width/2, p.height, p.width*1.5, 10, { isStatic: true });
+  ground = Bodies.rectangle(p.width/2, p.height, p.width*1.5, 10, { isStatic: true });
   bodies.push(ground);
 
   var wallLeft = Bodies.rectangle(-p.width/4,p.height/2,10,p.height+20, { isStatic: true });
@@ -141,6 +169,8 @@ function resetWorld() {
 
   // add all of the bodies to the world
   World.add(engine.world, bodies);
+
+  hitGroundCount = 0;
 
 }
 

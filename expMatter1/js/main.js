@@ -4,8 +4,11 @@ import dat from 'dat-gui';
 import TWEEN from 'tween.js';
 import Stats from 'stats.js';
 import p5 from 'p5';
+import 'p5/lib/addons/p5.sound.js';
+
 
 import * as Scene from './scene.js';
+import * as SoundMgr from './soundMgr.js';
 
 var sketch = function( p ) {
 
@@ -33,6 +36,7 @@ var sketch = function( p ) {
       this.resetWorld = function() {
         Scene.resetWorld();
       };
+      this.isMuted = true;
       this.saveCanvas = function() {
         p.save('blackandwhiteblocks.png');
       };
@@ -47,6 +51,10 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'restitution', 0, 1);
     gui.add( controlAttr, 'resetThingPos' );
     gui.add( controlAttr, 'resetWorld' );
+    gui.add( controlAttr, 'isMuted' ).onChange(function(v){
+      console.log('isMuted flag being set to '+v);
+      SoundMgr.setMute( v );
+    });
     gui.add( controlAttr, 'saveCanvas' );
     // gui.add( controlAttr, 'resetScene' );
 
@@ -61,6 +69,7 @@ var sketch = function( p ) {
     };
 
     Scene.init(p, controlAttr);
+    SoundMgr.init(p, controlAttr);
 
   };
 
