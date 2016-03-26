@@ -18,6 +18,7 @@ var ground;
 
 var bgColor;
 var pg;
+var scaleFactorCorrection; //correct for an ongoing p5 library bug when pixelDensity>1
 
 var controlAttr;
 
@@ -55,7 +56,7 @@ function init(pIn, controlAttrIn) {
           if ( pair.bodyA === ground || pair.bodyB === ground ) {
             console.log('hit ground');
             hitGroundCount += 1;
-            if ( hitGroundCount < 10 ) {
+            if ( hitGroundCount <= 10 ) {
               SoundMgr.playSound();
             }
           }
@@ -68,8 +69,11 @@ function init(pIn, controlAttrIn) {
 
   resetWorld();
 
+  if ( p.displayDensity() > 1 ) {
+    scaleFactorCorrection = 1 / p.displayDensity();
+  }
   bgColor = p.color('#aaa');
-  pg = p.createGraphics(p.width,p.height);
+  pg = p.createGraphics( p.width, p.height);
 
   timeScaleTarget = 1;
   timeToChangeTimeScale = p.millis() + p.random(5000,15000);
@@ -124,6 +128,13 @@ function Thing() {
   this.draw = function(){
     var g = pg;
     g.push();
+    if ( scaleFactorCorrection ) {
+      // this is necessary when the drawing is done to a graphics
+      // buffer created by createGraphics due to an ongoing bug
+      // with the p5 library when the pixelDensity is greater than 1,
+      // e.g. on laptop retina displays
+      g.scale(scaleFactorCorrection);
+    }
     g.blendMode(p.EXCLUSION);
     g.fill(255);
     g.noStroke();
@@ -150,7 +161,13 @@ function resetWorld() {
   bodies.push( wallLeft );
   bodies.push( wallRight );
 
-  var numThings = controlAttr.numBox;
+  var numThings;
+  if ( controlAttr.autoMode ) {
+    numThings = p.floor(p.random(2,10));
+    SoundMgr.setSoundMode(p.round(p.random(1,2)));
+  } else {
+    numThings = controlAttr.numBox;
+  }
   for ( var i=0; i < numThings; i++ ) {
     var t = new Thing();
     things.push( t );

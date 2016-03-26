@@ -88,6 +88,7 @@
 	  p.setup = function () {
 	    p.createCanvas(p.windowWidth, p.windowHeight);
 	    //p.noLoop();
+	    console.log('displayDensity = ' + p.displayDensity());
 	
 	    controlAttr = new function () {
 	      this.numBox = 8;
@@ -104,6 +105,7 @@
 	      };
 	      this.isMuted = false;
 	      this.soundMode = SoundMgr.MODE_NOISE;
+	      this.autoMode = true;
 	      this.saveCanvas = function () {
 	        p.save('blackandwhiteblocks.png');
 	      };
@@ -121,6 +123,15 @@
 	    gui.add(controlAttr, 'isMuted').onChange(function (v) {
 	      console.log('isMuted flag being set to ' + v);
 	      SoundMgr.setMute(v);
+	    });
+	    gui.add(controlAttr, 'autoMode').onChange(function (v) {
+	      console.log('autoMode flag being set to ' + v);
+	      if (!v) {
+	        // ensure that the sound mode matches the user setting...
+	        // this is necessary because in autoMode=true, the soundMode
+	        // can change automatically between worldResets
+	        SoundMgr.setSoundMode(controlAttr.soundMode);
+	      }
 	    });
 	    gui.add(controlAttr, 'soundMode', 1, 2).step(1).onChange(function (v) {
 	      console.log('soundMode being set to ' + v);
@@ -52231,6 +52242,7 @@
 	
 	var bgColor;
 	var pg;
+	var scaleFactorCorrection; //correct for an ongoing p5 library bug when pixelDensity>1
 	
 	var controlAttr;
 	
@@ -52266,7 +52278,7 @@
 	      if (pair.bodyA === ground || pair.bodyB === ground) {
 	        console.log('hit ground');
 	        hitGroundCount += 1;
-	        if (hitGroundCount < 10) {
+	        if (hitGroundCount <= 10) {
 	          SoundMgr.playSound();
 	        }
 	      }
@@ -52277,6 +52289,9 @@
 	
 	  resetWorld();
 	
+	  if (p.displayDensity() > 1) {
+	    scaleFactorCorrection = 1 / p.displayDensity();
+	  }
 	  bgColor = p.color('#aaa');
 	  pg = p.createGraphics(p.width, p.height);
 	
@@ -52333,6 +52348,13 @@
 	  this.draw = function () {
 	    var g = pg;
 	    g.push();
+	    if (scaleFactorCorrection) {
+	      // this is necessary when the drawing is done to a graphics
+	      // buffer created by createGraphics due to an ongoing bug
+	      // with the p5 library when the pixelDensity is greater than 1,
+	      // e.g. on laptop retina displays
+	      g.scale(scaleFactorCorrection);
+	    }
 	    g.blendMode(p.EXCLUSION);
 	    g.fill(255);
 	    g.noStroke();
@@ -52358,7 +52380,13 @@
 	  bodies.push(wallLeft);
 	  bodies.push(wallRight);
 	
-	  var numThings = controlAttr.numBox;
+	  var numThings;
+	  if (controlAttr.autoMode) {
+	    numThings = p.floor(p.random(2, 10));
+	    SoundMgr.setSoundMode(p.round(p.random(1, 2)));
+	  } else {
+	    numThings = controlAttr.numBox;
+	  }
 	  for (var i = 0; i < numThings; i++) {
 	    var t = new Thing();
 	    things.push(t);

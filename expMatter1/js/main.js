@@ -22,6 +22,7 @@ var sketch = function( p ) {
   p.setup = function() {
     p.createCanvas(p.windowWidth, p.windowHeight);
     //p.noLoop();
+    console.log('displayDensity = '+p.displayDensity());
 
     controlAttr = new function () {
       this.numBox = 8;
@@ -38,6 +39,7 @@ var sketch = function( p ) {
       };
       this.isMuted = false;
       this.soundMode = SoundMgr.MODE_NOISE;
+      this.autoMode = true;
       this.saveCanvas = function() {
         p.save('blackandwhiteblocks.png');
       };
@@ -55,6 +57,15 @@ var sketch = function( p ) {
     gui.add( controlAttr, 'isMuted' ).onChange(function(v){
       console.log('isMuted flag being set to '+v);
       SoundMgr.setMute( v );
+    });
+    gui.add( controlAttr, 'autoMode' ).onChange(function(v){
+      console.log('autoMode flag being set to '+v);
+      if ( !v ) {
+        // ensure that the sound mode matches the user setting...
+        // this is necessary because in autoMode=true, the soundMode
+        // can change automatically between worldResets
+        SoundMgr.setSoundMode( controlAttr.soundMode );
+      }
     });
     gui.add( controlAttr, 'soundMode', 1, 2 ).step(1).onChange(function(v){
       console.log('soundMode being set to '+v);
