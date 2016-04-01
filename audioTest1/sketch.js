@@ -110,6 +110,9 @@ function keyPressed() {
     if (state === 0 && mic.enabled) {
 
       // record to our p5.SoundFile
+      if ( delay ) {
+        delay.amp(0);
+      }
       recorder.record(soundFile);
 
       background(255,0,0);
@@ -124,7 +127,11 @@ function keyPressed() {
       // send result to soundFile
       recorder.stop();
 
-      delay = new p5.Delay();
+      if ( delay ) {
+        delay.amp(1);
+      } else {
+        delay = new p5.Delay();
+      }
       delay.process( soundFile, 1, 0.9, 1000 );
 
       text('Stopped', 20, 20);
