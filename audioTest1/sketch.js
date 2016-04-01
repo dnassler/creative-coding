@@ -1,6 +1,7 @@
 var mic, recorder, soundFile;
 var state = 0;
 var delay;
+var isSoundFileInitialized = false;
 
 function setup(){
   createCanvas(windowWidth, windowHeight);
@@ -23,6 +24,7 @@ function setup(){
   text('keyPress to record', 20, 20);
 
   delayCheck = millis() + delay0;
+  delay = new p5.Delay();
 
   rectMode( CENTER );
 }
@@ -73,11 +75,13 @@ function draw(){
   //rect(width/2, constrain(height-micLevel*height*5, 0, height), 100, 10);
 
   if ( state === 0 ) {
-    text('keyPress to record', 20, 20);
+    text('press spacebar to record a new sample or press P key to replay last sample', 20, 20);
   } else if ( state === 1 ) {
-    text('recording!', 20, 20);
+    text('recording sample!', 20, 20);
   } else if ( state === 2 ) {
-    text('stopped recording', 20, 20);
+    text('done recording a new sample, press spacebar to play it', 20, 20);
+  } else if ( state === 3 ) {
+    text('new sample started', 20, 20);
   }
 }
 
@@ -110,14 +114,15 @@ function keyPressed() {
     if (state === 0 && mic.enabled) {
 
       // record to our p5.SoundFile
-      if ( delay ) {
-        delay.amp(0);
-      }
+      // if ( delay ) {
+      //   delay.amp(0);
+      // }
+      masterVolume(0);
       recorder.record(soundFile);
 
       background(255,0,0);
       fill(255);
-      text('Recording!', 20, 20);
+      // text('Recording!', 20, 20);
       state++;
     }
     else if (state === 1) {
@@ -127,14 +132,18 @@ function keyPressed() {
       // send result to soundFile
       recorder.stop();
 
-      if ( delay ) {
-        delay.amp(1);
-      } else {
-        delay = new p5.Delay();
-      }
+      isSoundFileInitialized = true;
+
+      masterVolume(1);
+
+      // if ( delay ) {
+      //   delay.amp(1);
+      // } else {
+      //   delay = new p5.Delay();
+      // }
       delay.process( soundFile, 1, 0.9, 1000 );
 
-      text('Stopped', 20, 20);
+      // text('Stopped', 20, 20);
       state++;
     }
 
@@ -142,11 +151,19 @@ function keyPressed() {
       soundFile.play(); // play the result!
       //save(soundFile, 'mySound.wav');
       state++;
-      window.setTimeout(function(){ state = 0; },2000);
+      window.setTimeout(function(){
+        if ( state > 2 ) {
+          state = 0;
+        }
+      }, 2000);
     }
 
-  } else if ( key === 'Q' ) {
-    soundFile.play();
+  } else if ( key === 'P' ) {
+    if ( isSoundFileInitialized ) {
+      soundFile.play();
+    } else {
+      console.log('ignore request to play last sample because there was no last sample!');
+    }
   }
 
 }
