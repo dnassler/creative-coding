@@ -2,6 +2,7 @@ var mic, recorder, soundFile;
 var state = 0;
 var delay;
 var isSoundFileInitialized = false;
+var amplitude;
 
 function setup(){
   createCanvas(windowWidth, windowHeight);
@@ -19,12 +20,14 @@ function setup(){
   // playback & save the recording
   soundFile = new p5.SoundFile();
 
+  amplitude = new p5.Amplitude();
 
   fill(255);
   text('keyPress to record', 20, 20);
 
   delayCheck = millis() + delay0;
   delay = new p5.Delay();
+  amplitude.setInput( p5.soundOut.output );
 
   rectMode( CENTER );
 }
@@ -35,13 +38,25 @@ var delayCheck;
 var micHistory = [];
 var maxLevelInDelayInterval = 0;
 var levelIndicatorWidth = 100;
+var message; // holds temporary message for display (overrides standard state messages)
 
 // function mouseMoved() {
 //   console.log('mouseX = '+mouseX);
 // }
 function draw(){
   background(0);
-  micLevel = mic.getLevel();
+
+  if ( state === 1 ) {
+    // we're recording so use the microphone level to affect levels indicator
+    micLevel = mic.getLevel();
+  } else {
+    micLevel = amplitude.getLevel();
+    if ( micLevel < 0.01 ) {
+      micLevel += mic.getLevel();
+    }
+  }
+  //console.log('micLevel = '+micLevel);
+
   if ( micLevel > maxLevelInDelayInterval ) {
     maxLevelInDelayInterval = micLevel;
   }
@@ -75,13 +90,15 @@ function draw(){
   //rect(width/2, constrain(height-micLevel*height*5, 0, height), 100, 10);
 
   if ( state === 0 ) {
-    text('press spacebar to record a new sample or press P key to replay last sample', 20, 20);
+    if ( message ) {
+      text( message, 20, 20 );
+    } else {
+      text('press SPACEBAR to record a new sample,\npress the P-key to replay last sample,\nor press the R-key to reset delay effect (stop echo)', 20, 20);
+    }
   } else if ( state === 1 ) {
-    text('recording sample!', 20, 20);
+    text('recording sample!\npress SPACEBAR to stop recording', 20, 20);
   } else if ( state === 2 ) {
-    text('done recording a new sample, press spacebar to play it', 20, 20);
-  } else if ( state === 3 ) {
-    text('new sample started', 20, 20);
+    text('done recording a new sample, press SPACEBAR to play it', 20, 20);
   }
 }
 
@@ -150,24 +167,42 @@ function keyPressed() {
     else if (state === 2) {
       soundFile.play(); // play the result!
       //save(soundFile, 'mySound.wav');
-      state++;
-      window.setTimeout(function(){
-        if ( state > 2 ) {
-          state = 0;
-        }
-      }, 2000);
+      setMessage('new sample played and added to the echo');
+      state = 0;
+      // window.setTimeout(function(){
+      //   if ( state > 2 ) {
+      //     state = 0;
+      //   }
+      // }, 4000);
     }
 
   } else if ( key === 'P' ) {
     if ( isSoundFileInitialized ) {
       soundFile.play();
+      setMessage('last sample replayed and added to the echo', 4000);
     } else {
       console.log('ignore request to play last sample because there was no last sample!');
     }
+  } else if ( key === 'R' ) {
+    delay.disconnect();
+    delay = new p5.Delay();
+    setMessage('delay effect/echo has been RESET', 4000);
   }
 
 }
 
+var timeoutID;
+
+function setMessage( msg, duration ) {
+  duration = duration || 4000;
+  message = msg;
+  if ( timeoutID ) {
+    window.clearTimeout( timeoutID );
+  }
+  timeoutID = window.setTimeout(function(){
+    message = undefined;
+  }, duration);
+}
 
 function listDevices() {
   navigator.mediaDevices.enumerateDevices()
