@@ -39,18 +39,22 @@ var micHistory = [];
 var maxLevelInDelayInterval = 0;
 var levelIndicatorWidth = 100;
 var message; // holds temporary message for display (overrides standard state messages)
-
+var displayLevelFactor = 1;
 // function mouseMoved() {
 //   console.log('mouseX = '+mouseX);
 // }
 function draw(){
   background(0);
 
+  speedFactor = mouseX/width;
+  //displayLevelFactor = 2*(1+(height-mouseY)/height);
+
   if ( state === 1 ) {
     // we're recording so use the microphone level to affect levels indicator
     micLevel = mic.getLevel();
   } else {
     micLevel = amplitude.getLevel();
+    //micLevel *= displayLevelFactor;
     if ( micLevel < 0.01 ) {
       micLevel += mic.getLevel();
     }
@@ -60,7 +64,6 @@ function draw(){
   if ( micLevel > maxLevelInDelayInterval ) {
     maxLevelInDelayInterval = micLevel;
   }
-  speedFactor = mouseX/width;
   if ( delayCheck < millis() ) {
     delayCheck = millis() + delay0 * speedFactor;
     micHistory.unshift( maxLevelInDelayInterval );
@@ -186,6 +189,7 @@ function keyPressed() {
   } else if ( key === 'R' ) {
     delay.disconnect();
     delay = new p5.Delay();
+    delay.process( soundFile, 1, 0.9, 1000 );
     setMessage('delay effect/echo has been RESET', 4000);
   }
 
