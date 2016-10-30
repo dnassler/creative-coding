@@ -37,7 +37,7 @@ var sketch = function( p ) {
       this.resetWorld = function() {
         Scene.resetWorld();
       };
-      this.isMuted = false;
+      this.isMuted = true;
       this.soundMode = SoundMgr.MODE_NOISE;
       this.autoMode = true;
       this.saveCanvas = function() {

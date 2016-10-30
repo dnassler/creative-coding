@@ -56,9 +56,9 @@ function init(pIn, controlAttrIn) {
           if ( pair.bodyA === ground || pair.bodyB === ground ) {
             console.log('hit ground');
             hitGroundCount += 1;
-            if ( hitGroundCount <= 10 ) {
+            // if ( hitGroundCount <= 10 ) {
               SoundMgr.playSound();
-            }
+            // }
           }
           // pair.bodyA.render.fillStyle = '#bbbbbb';
           // pair.bodyB.render.fillStyle = '#bbbbbb';

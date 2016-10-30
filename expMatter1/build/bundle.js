@@ -103,7 +103,7 @@
 	      this.resetWorld = function () {
 	        Scene.resetWorld();
 	      };
-	      this.isMuted = false;
+	      this.isMuted = true;
 	      this.soundMode = SoundMgr.MODE_NOISE;
 	      this.autoMode = true;
 	      this.saveCanvas = function () {
@@ -52278,9 +52278,9 @@
 	      if (pair.bodyA === ground || pair.bodyB === ground) {
 	        console.log('hit ground');
 	        hitGroundCount += 1;
-	        if (hitGroundCount <= 10) {
-	          SoundMgr.playSound();
-	        }
+	        // if ( hitGroundCount <= 10 ) {
+	        SoundMgr.playSound();
+	        // }
 	      }
 	      // pair.bodyA.render.fillStyle = '#bbbbbb';
 	      // pair.bodyB.render.fillStyle = '#bbbbbb';
@@ -61871,8 +61871,8 @@
 	  // delay.process() accepts 4 parameters:
 	  // source, delayTime, feedback, filter frequency
 	  // play with these numbers!!
-	  delay.process(noise, 0.99, .9, 2300);
-	  delay2.process(pulse, 0.99, .9, 1000);
+	  // delay.process(noise, 0.99, .9, 2300);
+	  // delay2.process(pulse, 0.99, .9, 1000);
 	
 	  // play the noise with an envelope,
 	  // a series of fades ( time / value pairs )
