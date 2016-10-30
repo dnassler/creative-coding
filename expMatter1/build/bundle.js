@@ -61871,8 +61871,8 @@
 	  // delay.process() accepts 4 parameters:
 	  // source, delayTime, feedback, filter frequency
 	  // play with these numbers!!
-	  delay.process(noise, 1, .9, 2300);
-	  delay2.process(pulse, 1, .9, 1000);
+	  delay.process(noise, 0.99, .9, 2300);
+	  delay2.process(pulse, 0.99, .9, 1000);
 	
 	  // play the noise with an envelope,
 	  // a series of fades ( time / value pairs )
