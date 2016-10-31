@@ -12,11 +12,21 @@ var isMuted;
 var noise, env, delay;
 var pulse, delay2, env2;
 
+var crickets;
+var cricketVolume;
+
+function preload(pIn) {
+  p = pIn;
+  crickets = p.loadSound('Sep_27_2014-003_crickets1b.mp3');
+}
+
 function init(pIn, controlAttrIn) {
   p = pIn;
   controlAttr = controlAttrIn;
   soundMode = controlAttrIn.soundMode || MODE_NOISE;
   isMuted = controlAttrIn.isMuted;
+  cricketVolume = 1.0;
+  setMute(isMuted);
 
   noise = new p5.Noise('brown');
   noise.amp(0);
@@ -51,10 +61,20 @@ function setSoundMode( newMode ) {
 
 function setMute( flag ) {
   isMuted = flag;
+  if ( !isMuted ) {
+    cricketVolume = 1.0;
+    crickets.setVolume(cricketVolume);
+    crickets.loop();
+  } else {
+    crickets.stop();
+  }
 }
 
 function playSound() {
   if ( isMuted ) {
+    return;
+  }
+  if ( !controlAttr.hitsMakeSound ) {
     return;
   }
   if ( soundMode === MODE_NOISE ) {
@@ -65,4 +85,13 @@ function playSound() {
   }
 }
 
-export {init, setSoundMode, playSound, setMute, MODE_NOISE, MODE_BLEEP};
+function adjustBackgroundVolume() {
+  cricketVolume = p.random( 0.1, 1.0 );
+  if ( cricketVolume > 0.85 ) {
+    cricketVolume = 1.0;
+  }
+  crickets.setVolume( cricketVolume, 1.0 );
+  console.log('cricketVolume = '+cricketVolume);
+}
+
+export {preload, init, setSoundMode, playSound, adjustBackgroundVolume, setMute, MODE_NOISE, MODE_BLEEP};

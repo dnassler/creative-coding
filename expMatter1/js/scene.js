@@ -24,7 +24,7 @@ var controlAttr;
 
 var bodyOptions;
 
-var timeScaleTarget;
+// var timeScaleTarget;
 var timeToChangeTimeScale;
 var timeToResetWorld;
 
@@ -75,8 +75,8 @@ function init(pIn, controlAttrIn) {
   bgColor = p.color('#aaa');
   pg = p.createGraphics( p.width, p.height);
 
-  timeScaleTarget = 1;
-  timeToChangeTimeScale = p.millis() + p.random(5000,15000);
+  // timeScaleTarget = 1;
+  // timeToChangeTimeScale = p.millis() + p.random(5000,15000);
   timeToResetWorld = p.millis() + p.random(3000,15000);
 
   // run the engine
@@ -188,6 +188,10 @@ function resetWorld() {
   World.add(engine.world, bodies);
 
   hitGroundCount = 0;
+  timeToChangeTimeScale = p.millis() + p.random(5000,15000);
+  engine.timing.timeScale = 1;
+
+  SoundMgr.adjustBackgroundVolume();
 
 }
 
@@ -206,14 +210,14 @@ function update() {
         engine.timing.timeScale = 1;
       }
     } else if ( engine.timing.timeScale > 0.9 ){
-      if ( p.random(10) < 1 ) {
+      if ( p.random(10) < 5 ) {
         engine.timing.timeScale = 0.5;
       } else {
-        engine.timing.timeScale = 0.05;
+        engine.timing.timeScale = 0.09;
       }
     } else {
-      if ( p.random(10) < 5 ) {
-        engine.timing.timeScale = 0.05;
+      if ( p.random(10) < 2 ) {
+        engine.timing.timeScale = 0.09;
       } else {
         engine.timing.timeScale = 1;
       }

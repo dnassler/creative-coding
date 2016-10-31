@@ -83,7 +83,9 @@
 	  var controlAttr;
 	  var stats;
 	
-	  p.preload = function () {};
+	  p.preload = function () {
+	    SoundMgr.preload(p);
+	  };
 	
 	  p.setup = function () {
 	    p.createCanvas(p.windowWidth, p.windowHeight);
@@ -103,7 +105,8 @@
 	      this.resetWorld = function () {
 	        Scene.resetWorld();
 	      };
-	      this.isMuted = true;
+	      this.isMuted = false;
+	      this.hitsMakeSound = false;
 	      this.soundMode = SoundMgr.MODE_NOISE;
 	      this.autoMode = true;
 	      this.saveCanvas = function () {
@@ -124,6 +127,7 @@
 	      console.log('isMuted flag being set to ' + v);
 	      SoundMgr.setMute(v);
 	    });
+	    gui.add(controlAttr, 'hitsMakeSound');
 	    gui.add(controlAttr, 'autoMode').onChange(function (v) {
 	      console.log('autoMode flag being set to ' + v);
 	      if (!v) {
@@ -139,6 +143,8 @@
 	    });
 	    gui.add(controlAttr, 'saveCanvas');
 	    // gui.add( controlAttr, 'resetScene' );
+	
+	    _datGui2.default.GUI.toggleHide();
 	
 	    stats = new _stats2.default();
 	    stats.domElement.style.position = 'absolute';
@@ -52248,7 +52254,7 @@
 	
 	var bodyOptions;
 	
-	var timeScaleTarget;
+	// var timeScaleTarget;
 	var timeToChangeTimeScale;
 	var timeToResetWorld;
 	
@@ -52295,8 +52301,8 @@
 	  bgColor = p.color('#aaa');
 	  pg = p.createGraphics(p.width, p.height);
 	
-	  timeScaleTarget = 1;
-	  timeToChangeTimeScale = p.millis() + p.random(5000, 15000);
+	  // timeScaleTarget = 1;
+	  // timeToChangeTimeScale = p.millis() + p.random(5000,15000);
 	  timeToResetWorld = p.millis() + p.random(3000, 15000);
 	
 	  // run the engine
@@ -52407,6 +52413,10 @@
 	  World.add(engine.world, bodies);
 	
 	  hitGroundCount = 0;
+	  timeToChangeTimeScale = p.millis() + p.random(5000, 15000);
+	  engine.timing.timeScale = 1;
+	
+	  SoundMgr.adjustBackgroundVolume();
 	}
 	
 	function resetThingPos() {
@@ -52424,14 +52434,14 @@
 	        engine.timing.timeScale = 1;
 	      }
 	    } else if (engine.timing.timeScale > 0.9) {
-	      if (p.random(10) < 1) {
+	      if (p.random(10) < 5) {
 	        engine.timing.timeScale = 0.5;
 	      } else {
-	        engine.timing.timeScale = 0.05;
+	        engine.timing.timeScale = 0.09;
 	      }
 	    } else {
-	      if (p.random(10) < 5) {
-	        engine.timing.timeScale = 0.05;
+	      if (p.random(10) < 2) {
+	        engine.timing.timeScale = 0.09;
 	      } else {
 	        engine.timing.timeScale = 1;
 	      }
@@ -61828,7 +61838,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.MODE_BLEEP = exports.MODE_NOISE = exports.setMute = exports.playSound = exports.setSoundMode = exports.init = undefined;
+	exports.MODE_BLEEP = exports.MODE_NOISE = exports.setMute = exports.adjustBackgroundVolume = exports.playSound = exports.setSoundMode = exports.init = exports.preload = undefined;
 	
 	var _p = __webpack_require__(296);
 	
@@ -61848,11 +61858,21 @@
 	var noise, env, delay;
 	var pulse, delay2, env2;
 	
+	var crickets;
+	var cricketVolume;
+	
+	function preload(pIn) {
+	  p = pIn;
+	  crickets = p.loadSound('Sep_27_2014-003_crickets1b.mp3');
+	}
+	
 	function init(pIn, controlAttrIn) {
 	  p = pIn;
 	  controlAttr = controlAttrIn;
 	  soundMode = controlAttrIn.soundMode || MODE_NOISE;
 	  isMuted = controlAttrIn.isMuted;
+	  cricketVolume = 1.0;
+	  setMute(isMuted);
 	
 	  noise = new _p2.default.Noise('brown');
 	  noise.amp(0);
@@ -61886,10 +61906,20 @@
 	
 	function setMute(flag) {
 	  isMuted = flag;
+	  if (!isMuted) {
+	    cricketVolume = 1.0;
+	    crickets.setVolume(cricketVolume);
+	    crickets.loop();
+	  } else {
+	    crickets.stop();
+	  }
 	}
 	
 	function playSound() {
 	  if (isMuted) {
+	    return;
+	  }
+	  if (!controlAttr.hitsMakeSound) {
 	    return;
 	  }
 	  if (soundMode === MODE_NOISE) {
@@ -61900,9 +61930,20 @@
 	  }
 	}
 	
+	function adjustBackgroundVolume() {
+	  cricketVolume = p.random(0.1, 1.0);
+	  if (cricketVolume > 0.85) {
+	    cricketVolume = 1.0;
+	  }
+	  crickets.setVolume(cricketVolume, 1.0);
+	  console.log('cricketVolume = ' + cricketVolume);
+	}
+	
+	exports.preload = preload;
 	exports.init = init;
 	exports.setSoundMode = setSoundMode;
 	exports.playSound = playSound;
+	exports.adjustBackgroundVolume = adjustBackgroundVolume;
 	exports.setMute = setMute;
 	exports.MODE_NOISE = MODE_NOISE;
 	exports.MODE_BLEEP = MODE_BLEEP;

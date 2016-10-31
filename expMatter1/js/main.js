@@ -16,7 +16,7 @@ var sketch = function( p ) {
   var stats;
 
   p.preload = function() {
-
+    SoundMgr.preload(p);
   };
 
   p.setup = function() {
@@ -37,7 +37,8 @@ var sketch = function( p ) {
       this.resetWorld = function() {
         Scene.resetWorld();
       };
-      this.isMuted = true;
+      this.isMuted = false;
+      this.hitsMakeSound = false;
       this.soundMode = SoundMgr.MODE_NOISE;
       this.autoMode = true;
       this.saveCanvas = function() {
@@ -58,6 +59,7 @@ var sketch = function( p ) {
       console.log('isMuted flag being set to '+v);
       SoundMgr.setMute( v );
     });
+    gui.add( controlAttr, 'hitsMakeSound' );
     gui.add( controlAttr, 'autoMode' ).onChange(function(v){
       console.log('autoMode flag being set to '+v);
       if ( !v ) {
@@ -73,6 +75,8 @@ var sketch = function( p ) {
     });
     gui.add( controlAttr, 'saveCanvas' );
     // gui.add( controlAttr, 'resetScene' );
+
+    dat.GUI.toggleHide();
 
     stats = new Stats();
     stats.domElement.style.position = 'absolute';
