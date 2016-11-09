@@ -29,7 +29,7 @@ function preload() {
 
   doorSqueak2 = loadSound("doorSqueak2.mp3");
   doorSqueak1 = loadSound("doorSqueak1.mp3");
-  doorCloseHard1 = loadSound("doorCloseHard1.mp3");
+  doorCloseHard1 = loadSound("doorCloseHard1b.mp3");
 }
 
 function setup() {
