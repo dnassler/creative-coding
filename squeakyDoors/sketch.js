@@ -18,6 +18,8 @@ var doorMgr;
 var DOOR_WIDTH = 100;
 var DOOR_HEIGHT = 100;
 
+var introText;
+var showIntroText = false;
 
 function preload() {
 
@@ -149,10 +151,33 @@ function setup() {
 
   if ( window.orientation === undefined ) {
     // only start automatically if not mobile
-    SceneMgr.instance().start();
+    showIntroText = true;
+    introText = "";
+    var startup = new Promise( function(resolve) {
+      window.setTimeout(function(){
+        resolve();
+      }, 1000);
+    }).then(function(){
+      return new Promise( function(resolve){
+        introText = "Squeaky Doors";
+        window.setTimeout(function(){
+          introText = "";
+          resolve();
+        }, 3000);
+      });
+    }).then(function(){
+      return new Promise( function(resolve){
+        window.setTimeout(function(){
+          resolve();
+        }, 3000);
+      });
+    }).then(function(){
+      // start show
+      SceneMgr.instance().start();
+      //scene0();
+    });
   }
 
-  //scene0();
 }
 
 function draw() {
@@ -160,10 +185,16 @@ function draw() {
 
   if ( !debug && !SceneMgr.instance().isStarted() ) {
     stroke(0);
-    fill(255);
-    textSize(50);
+    fill(0);
     textAlign(CENTER);
-    text("touch to start",window.innerWidth/2,window.innerHeight/2);
+    textSize(50);
+    if ( showIntroText ) {
+      if ( introText ) {
+        text(introText, window.innerWidth/2,window.innerHeight/2);
+      }
+    } else {
+      text("touch to start on mobile/tablet",window.innerWidth/2,window.innerHeight/2);
+    }
     return;
   }
 
@@ -1760,7 +1791,7 @@ function SceneMgr() {
 
   // updated by updateSceneCountInfo
   this.sceneCountInfo = {};
-  this.sceneCountInfoCutoffPeriodMS = 5 * 60 * 1000; // 5 minutes
+  this.sceneCountInfoCutoffPeriodMS = 6 * 60 * 1000; // 6 minutes
 
   this.MAX_SCENE_PLAY_COUNT = 40;
   this.scenePlayCount = 0;
